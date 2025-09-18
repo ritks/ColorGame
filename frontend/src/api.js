@@ -10,20 +10,28 @@ export async function startGame() {
   return response.data;
 }
 
-export async function levelComplete(level, timeSec, strikesUsed) {
+export async function levelComplete(level, timeSec, strikesUsed, colorDifference, smallestRowDifference, difficultyExample) {
   const response = await api.post("/game/level-complete", {
     level,
     timeSec,
-    strikesUsed
+    strikesUsed,
+    colorDifference,
+    smallestRowDifference,
+    difficultyExample
   });
   return response.data;
 }
 
-export async function gameOver(levelsBeaten, totalTimeSec, accuracy) {
+export async function gameOver(levelsBeaten, totalTimeSec, accuracy, currentLevelTime, currentLevelStrikes, colorDifference, smallestRowDifference, difficultyExample) {
   const response = await api.post("/game/game-over", {
     levelsBeaten,
-    totalTimeSec: totalTimeSec,
-    accuracy
+    totalTimeSec,
+    accuracy,
+    currentLevelTime,
+    currentLevelStrikes,
+    colorDifference,
+    smallestRowDifference,
+    difficultyExample
   });
   return response.data;
 }

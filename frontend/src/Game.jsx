@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { startGame, levelComplete, gameOver } from "./api";
 import TileRow from "./TileRow";
+import GameStats from "./GameStats";
 
 const MAX_STRIKES = 3;
 
@@ -13,10 +14,16 @@ export default function Game({ onQuit }) {
   const [strikesUsed, setStrikesUsed] = useState(0);
   const [solvedRows, setSolvedRows] = useState([]);
   const [timerStart, setTimerStart] = useState(null);
+  const [levelStartTime, setLevelStartTime] = useState(null);
   const [elapsedSec, setElapsedSec] = useState(0);
   const timerRef = useRef(null);
   const [gameOverState, setGameOverState] = useState(false);
   const [gameWon, setGameWon] = useState(false);
+  const [gameStats, setGameStats] = useState(null);
+  const [showStats, setShowStats] = useState(false);
+  
+  // Current level tracking
+  const [currentLevelData, setCurrentLevelData] = useState(null);
 
   // Start timer
   useEffect(() => {
@@ -39,9 +46,19 @@ export default function Game({ onQuit }) {
       setStrikesUsed(data.strikesUsed);
       setSolvedRows(new Array(data.rows).fill(false));
       setTimerStart(Date.now());
+      setLevelStartTime(Date.now());
       setGameOverState(false);
       setGameWon(false);
       setElapsedSec(0);
+      setGameStats(null);
+      setShowStats(false);
+      
+      // Store current level data for stats
+      setCurrentLevelData({
+        averageColorDifference: data.averageColorDifference,
+        smallestRowDifference: data.smallestRowDifference,
+        difficultyExample: data.difficultyExample
+      });
     }
     init();
   }, []);
@@ -75,28 +92,70 @@ export default function Game({ onQuit }) {
 
   async function handleLevelComplete() {
     clearInterval(timerRef.current);
-    // Send level complete to backend
-    const data = await levelComplete(level, elapsedSec, strikesUsed);
-    if (data.level > 10) {
-      // Game won
+    const levelTime = Math.floor((Date.now() - levelStartTime) / 1000);
+    
+    // Send level complete to backend with stats
+    const data = await levelComplete(
+      level, 
+      levelTime, 
+      strikesUsed,
+      currentLevelData.averageColorDifference,
+      currentLevelData.smallestRowDifference,
+      currentLevelData.difficultyExample
+    );
+    
+    if (data.gameCompleted) {
+      // Game won - show stats
       setGameWon(true);
+      setGameStats({
+        levelStats: data.levelStats,
+        smallestDifference: data.smallestDifference,
+        smallestDifferenceExample: data.smallestDifferenceExample,
+        totalTime: data.totalTime
+      });
+      setTimeout(() => setShowStats(true), 1500); // Show stats after celebration
     } else {
+      // Continue to next level
       setLevel(data.level);
       setRows(data.rows);
       setTilesPerRow(data.tilesPerRow);
       setColorData(data.colorData);
       setStrikesUsed(data.strikesUsed);
       setSolvedRows(new Array(data.rows).fill(false));
+      setLevelStartTime(Date.now());
       setTimerStart(Date.now());
       setElapsedSec(0);
+      
+      // Update current level data
+      setCurrentLevelData({
+        averageColorDifference: data.averageColorDifference,
+        smallestRowDifference: data.smallestRowDifference,
+        difficultyExample: data.difficultyExample
+      });
     }
   }
 
   async function handleGameOver() {
     clearInterval(timerRef.current);
+    const levelTime = Math.floor((Date.now() - levelStartTime) / 1000);
+    
+    // Send game over to backend with current level stats
+    const response = await gameOver(
+      level - 1, 
+      Math.floor((Date.now() - timerStart) / 1000), 
+      calculateAccuracy(),
+      levelTime,
+      strikesUsed,
+      currentLevelData?.averageColorDifference || 0,
+      currentLevelData?.smallestRowDifference || 0,
+      currentLevelData?.difficultyExample || null
+    );
+    
     setGameOverState(true);
-    // Send game over to backend
-    await gameOver(level - 1, elapsedSec, calculateAccuracy());
+    if (response.gameStats) {
+      setGameStats(response.gameStats);
+      setTimeout(() => setShowStats(true), 1500); // Show stats after game over message
+    }
   }
 
   function calculateAccuracy() {
@@ -117,7 +176,15 @@ export default function Game({ onQuit }) {
     setTilesPerRow(0);
     setColorData([]);
     setTimerStart(null);
+    setLevelStartTime(null);
+    setGameStats(null);
+    setShowStats(false);
+    setCurrentLevelData(null);
     onQuit();
+  }
+
+  if (showStats && gameStats) {
+    return <GameStats stats={gameStats} onPlayAgain={resetGame} />;
   }
 
   return (
@@ -127,16 +194,16 @@ export default function Game({ onQuit }) {
         <div>Strikes: {strikesUsed} / {MAX_STRIKES}</div>
         <div>Time: {elapsedSec}s</div>
       </div>
-      {gameOverState && (
+      {gameOverState && !showStats && (
         <div className="result-message">
           <h2>Game Over!</h2>
-          <button onClick={resetGame}>Play Again</button>
+          <p>Preparing your statistics...</p>
         </div>
       )}
-      {gameWon && (
+      {gameWon && !showStats && (
         <div className="result-message">
-          <h2>Congratulations! You won!</h2>
-          <button onClick={resetGame}>Play Again</button>
+          <h2>🎉 Congratulations! You won! 🎉</h2>
+          <p>Loading your detailed statistics...</p>
         </div>
       )}
       {!gameOverState && !gameWon && (

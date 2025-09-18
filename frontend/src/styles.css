@@ -70,3 +70,197 @@ body {
 .result-message {
   margin-top: 20px;
 }
+
+/* Statistics Styles */
+.stats-container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  text-align: left;
+}
+
+.stats-container h2 {
+  text-align: center;
+  color: #0077ff;
+  margin-bottom: 30px;
+  font-size: 1.8rem;
+}
+
+.stats-section {
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.stats-section:last-of-type {
+  border-bottom: none;
+}
+
+.stats-section h3 {
+  color: #333;
+  margin-bottom: 15px;
+  font-size: 1.3rem;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #0077ff;
+}
+
+.stat-label {
+  font-weight: 500;
+  color: #666;
+}
+
+.stat-value {
+  font-weight: bold;
+  color: #333;
+  font-size: 1.1rem;
+}
+
+/* Difficulty Example */
+.difficulty-example {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  margin-top: 15px;
+}
+
+.example-tiles {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.example-tile {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 3px solid #ddd;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.example-tile.odd-tile {
+  border-color: #ff4444;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.vs-text {
+  font-weight: bold;
+  color: #666;
+  font-size: 1.2rem;
+}
+
+.example-caption {
+  color: #666;
+  font-style: italic;
+  margin: 0;
+}
+
+/* Level Stats Table */
+.level-stats-table {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.table-header {
+  display: grid;
+  grid-template-columns: 60px 80px 80px 100px 1fr;
+  gap: 10px;
+  padding: 12px 15px;
+  background: #0077ff;
+  color: white;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.table-row {
+  display: grid;
+  grid-template-columns: 60px 80px 80px 100px 1fr;
+  gap: 10px;
+  padding: 10px 15px;
+  background: white;
+  border-bottom: 1px solid #eee;
+  font-size: 0.9rem;
+}
+
+.table-row.failed-level {
+  background: #fff5f5;
+  border-left: 4px solid #ff4444;
+}
+
+.table-row:hover {
+  background: #f0f8ff;
+}
+
+.play-again-button {
+  display: block;
+  margin: 30px auto 0;
+  padding: 12px 30px;
+  font-size: 1.2rem;
+  background: #0077ff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.play-again-button:hover {
+  background: #0066dd;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .stats-container {
+    margin: 0 -10px;
+    border-radius: 0;
+  }
+  
+  .table-header,
+  .table-row {
+    grid-template-columns: 50px 70px 60px 80px 1fr;
+    gap: 5px;
+    padding: 8px 10px;
+    font-size: 0.8rem;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .example-tiles {
+    gap: 10px;
+  }
+  
+  .example-tile {
+    width: 50px;
+    height: 50px;
+  }
+}
