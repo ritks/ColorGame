@@ -1,10 +1,10 @@
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-  background-color: #f5f5f5;
+  background-color: #000000;
   margin: 0;
   padding: 20px;
-  color: #333;
+  color: #ffffff;
 }
 
 .app-container {
@@ -52,13 +52,13 @@ body {
   border-radius: 50%;
   cursor: pointer;
   border: 2px solid transparent;
-  transition: border-color 0.2s;
+  transition: transform 0.15s ease-out;
   box-shadow: 0 0 4px rgb(0 0 0 / 0.1);
 }
 
 .tile:hover,
 .tile:focus {
-  border-color: #0077ff;
+  transform: scale(1.1);
   outline: none;
 }
 
@@ -76,10 +76,11 @@ body {
   max-width: 600px;
   margin: 0 auto;
   padding: 20px;
-  background: white;
+  background: #1a1a1a;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
   text-align: left;
+  color: #ffffff;
 }
 
 .stats-container h2 {
@@ -92,7 +93,7 @@ body {
 .stats-section {
   margin-bottom: 30px;
   padding-bottom: 20px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #333;
 }
 
 .stats-section:last-of-type {
@@ -100,7 +101,7 @@ body {
 }
 
 .stats-section h3 {
-  color: #333;
+  color: #ffffff;
   margin-bottom: 15px;
   font-size: 1.3rem;
 }
@@ -116,25 +117,25 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 10px 15px;
-  background: #f8f9fa;
+  background: #2a2a2a;
   border-radius: 8px;
   border-left: 4px solid #0077ff;
 }
 
 .stat-label {
   font-weight: 500;
-  color: #666;
+  color: #cccccc;
 }
 
 .stat-value {
   font-weight: bold;
-  color: #333;
+  color: #ffffff;
   font-size: 1.1rem;
 }
 
 /* Difficulty Example */
 .difficulty-example {
-  background: #f8f9fa;
+  background: #2a2a2a;
   padding: 20px;
   border-radius: 8px;
   text-align: center;
@@ -169,12 +170,12 @@ body {
 
 .vs-text {
   font-weight: bold;
-  color: #666;
+  color: #cccccc;
   font-size: 1.2rem;
 }
 
 .example-caption {
-  color: #666;
+  color: #cccccc;
   font-style: italic;
   margin: 0;
 }
@@ -184,7 +185,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  background: #f8f9fa;
+  background: #2a2a2a;
   border-radius: 8px;
   overflow: hidden;
 }
@@ -205,18 +206,19 @@ body {
   grid-template-columns: 60px 80px 80px 100px 1fr;
   gap: 10px;
   padding: 10px 15px;
-  background: white;
-  border-bottom: 1px solid #eee;
+  background: #1a1a1a;
+  border-bottom: 1px solid #333;
   font-size: 0.9rem;
+  color: #ffffff;
 }
 
 .table-row.failed-level {
-  background: #fff5f5;
+  background: #2a1a1a;
   border-left: 4px solid #ff4444;
 }
 
 .table-row:hover {
-  background: #f0f8ff;
+  background: #2a2a2a;
 }
 
 .play-again-button {
