@@ -1,6 +1,5 @@
 Additional Features
 
-- make game harder
 - show stats at game end
 
 Quality Changes
