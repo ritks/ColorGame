@@ -7,17 +7,23 @@ export default function TileRow({
   oddColor,
   oddTileIndex,
   solved,
-  onTileClick
+  onTileClick,
+  disappearedTiles = [] // New prop to track disappeared tiles
 }) {
   const tiles = [];
 
   for (let i = 0; i < tilesPerRow; i++) {
     const color = i === oddTileIndex ? oddColor : baseColor;
+    const isDisappeared = disappearedTiles.includes(i);
+    
     tiles.push(
       <div
         key={i}
-        className={`tile ${solved ? "solved" : ""}`}
-        style={{ backgroundColor: color }}
+        className={`tile ${solved ? "solved" : ""} ${isDisappeared ? "disappeared" : ""}`}
+        style={{ 
+          backgroundColor: isDisappeared ? "#000000" : color, // Background color when disappeared
+          transition: "background-color 0.3s ease-out, opacity 0.3s ease-out"
+        }}
         onClick={() => onTileClick(rowIndex, i)}
         role="button"
         tabIndex={0}
