@@ -8,7 +8,7 @@ export default function TileRow({
   oddTileIndex,
   solved,
   onTileClick,
-  disappearedTiles = [] // New prop to track disappeared tiles
+  disappearedTiles = [] // Tiles that should disappear due to wrong guesses
 }) {
   const tiles = [];
 
@@ -21,8 +21,7 @@ export default function TileRow({
         key={i}
         className={`tile ${solved ? "solved" : ""} ${isDisappeared ? "disappeared" : ""}`}
         style={{ 
-          backgroundColor: isDisappeared ? "#000000" : color, // Background color when disappeared
-          transition: "background-color 0.3s ease-out, opacity 0.3s ease-out"
+          backgroundColor: isDisappeared ? "transparent" : color
         }}
         onClick={() => onTileClick(rowIndex, i)}
         role="button"

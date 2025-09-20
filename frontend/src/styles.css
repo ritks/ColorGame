@@ -68,6 +68,32 @@ body {
   transform: scale(0.95);
   transition: all 0.6s ease-out;
 }
+
+/* New animation for wrong guesses */
+.tile.disappeared {
+  opacity: 0;
+  transform: scale(0.8) rotate(180deg);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out, background-color 0.6s ease-out;
+  background-color: transparent !important;
+}
+
+/* Add a subtle shake animation on wrong guess */
+@keyframes wrongGuessShake {
+  0%, 100% { transform: translateX(0) scale(0.8) rotate(180deg); }
+  25% { transform: translateX(-3px) scale(0.8) rotate(180deg); }
+  75% { transform: translateX(3px) scale(0.8) rotate(180deg); }
+}
+
+.tile.disappeared {
+  animation: wrongGuessShake 0.3s ease-out, disappear 0.6s ease-out 0.3s forwards;
+}
+
+@keyframes disappear {
+  to {
+    opacity: 0;
+    transform: scale(0.8) rotate(180deg);
+  }
+}
   
 .result-message {
   margin-top: 20px;

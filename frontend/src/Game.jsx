@@ -13,6 +13,7 @@ export default function Game({ onQuit }) {
   const [colorData, setColorData] = useState([]);
   const [strikesUsed, setStrikesUsed] = useState(0);
   const [solvedRows, setSolvedRows] = useState([]);
+  const [disappearedTiles, setDisappearedTiles] = useState([]); // New state for wrong guesses
   const [timerStart, setTimerStart] = useState(null);
   const [levelStartTime, setLevelStartTime] = useState(null);
   const [elapsedSec, setElapsedSec] = useState(0);
@@ -45,6 +46,7 @@ export default function Game({ onQuit }) {
       setColorData(data.colorData);
       setStrikesUsed(data.strikesUsed);
       setSolvedRows(new Array(data.rows).fill(false));
+      setDisappearedTiles(new Array(data.rows).fill().map(() => [])); // Initialize empty arrays for each row
       setTimerStart(Date.now());
       setLevelStartTime(Date.now());
       setGameOverState(false);
@@ -81,7 +83,13 @@ export default function Game({ onQuit }) {
         handleLevelComplete();
       }
     } else {
-      // wrong guess
+      // wrong guess - add tile to disappeared tiles for this row
+      const newDisappearedTiles = [...disappearedTiles];
+      if (!newDisappearedTiles[rowIndex].includes(tileIndex)) {
+        newDisappearedTiles[rowIndex] = [...newDisappearedTiles[rowIndex], tileIndex];
+        setDisappearedTiles(newDisappearedTiles);
+      }
+      
       const newStrikes = strikesUsed + 1;
       setStrikesUsed(newStrikes);
       if (newStrikes >= MAX_STRIKES) {
@@ -122,6 +130,7 @@ export default function Game({ onQuit }) {
       setColorData(data.colorData);
       setStrikesUsed(data.strikesUsed);
       setSolvedRows(new Array(data.rows).fill(false));
+      setDisappearedTiles(new Array(data.rows).fill().map(() => [])); // Reset disappeared tiles for new level
       setLevelStartTime(Date.now());
       setTimerStart(Date.now());
       setElapsedSec(0);
@@ -170,6 +179,7 @@ export default function Game({ onQuit }) {
     setElapsedSec(0);
     setStrikesUsed(0);
     setSolvedRows([]);
+    setDisappearedTiles([]); // Reset disappeared tiles
     setSessionId(null);
     setLevel(1);
     setRows(0);
@@ -217,6 +227,7 @@ export default function Game({ onQuit }) {
               oddColor={row.oddColor}
               oddTileIndex={row.oddTileIndex}
               solved={solvedRows[i]}
+              disappearedTiles={disappearedTiles[i] || []} // Pass disappeared tiles for this row
               onTileClick={onTileClick}
             />
           ))}
