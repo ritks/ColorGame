@@ -3,6 +3,9 @@ import Game from "./Game";
 import AuthForm from "./AuthForm";
 import AggregateStats from "./AggregateStats";
 
+// Use the same API base URL configuration as api.js
+const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
+
 export default function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -14,7 +17,7 @@ export default function App() {
 
   const checkAuthStatus = async () => {
     try {
-      const response = await fetch('/api/auth/me', {
+      const response = await fetch(`${API_BASE_URL}/auth/me`, {
         credentials: 'include'
       });
       
@@ -36,7 +39,7 @@ export default function App() {
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/auth/logout', {
+      await fetch(`${API_BASE_URL}/auth/logout`, {
         method: 'POST',
         credentials: 'include'
       });

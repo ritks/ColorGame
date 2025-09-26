@@ -1,5 +1,8 @@
 import React, { useState } from "react";
 
+// Use the same API base URL configuration as api.js
+const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
+
 export default function AuthForm({ onAuthSuccess, onPlayAsGuest }) {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
@@ -16,7 +19,7 @@ export default function AuthForm({ onAuthSuccess, onPlayAsGuest }) {
     setError('');
 
     try {
-      const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
+      const endpoint = isLogin ? `${API_BASE_URL}/auth/login` : `${API_BASE_URL}/auth/register`;
       const payload = isLogin ? 
         { email: formData.email, password: formData.password } :
         { email: formData.email, password: formData.password, username: formData.username };

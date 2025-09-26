@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
 
+// Use the same API base URL configuration as api.js
+const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
+
 export default function AggregateStats({ user, onBack }) {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -11,7 +14,7 @@ export default function AggregateStats({ user, onBack }) {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch('/api/stats/aggregate', {
+      const response = await fetch(`${API_BASE_URL}/stats/aggregate`, {
         credentials: 'include'
       });
 
