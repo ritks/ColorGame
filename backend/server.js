@@ -4,8 +4,8 @@ import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import sqlite3 from "sqlite3";
-import { open } from "sqlite";
+import pkg from "pg";
+const { Pool } = pkg;
 import { v4 as uuidv4 } from "uuid";
 import { createSession, getSession, updateSession, deleteSession } from "./sessionStore.js";
 import { generateLevel } from "./gameLogic.js";
@@ -17,59 +17,150 @@ app.use(cookieParser());
 
 console.log('Server starting with authentication routes...');
 
-// CORS for local dev
-app.use(cors({
-  origin: "http://localhost:5173",
+// CORS configuration
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'production' 
+    ? process.env.FRONTEND_URL || true
+    : "http://localhost:5173",
   credentials: true
-}));
+};
+
+app.use(cors(corsOptions));
 
 // Database setup
 let db;
 async function initDatabase() {
   console.log('Initializing database...');
-  db = await open({
-    filename: './game_database.db',
-    driver: sqlite3.Database
-  });
   
-  // Create tables
-  await db.exec(`
-    CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      email TEXT UNIQUE NOT NULL,
-      password_hash TEXT NOT NULL,
-      username TEXT UNIQUE,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      last_login DATETIME
-    );
+  if (process.env.DATABASE_URL) {
+    // Production with PostgreSQL
+    db = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+    });
+  } else {
+    // Local development fallback to SQLite
+    const sqlite3 = await import('sqlite3');
+    const { open } = await import('sqlite');
+    
+    db = await open({
+      filename: './game_database.db',
+      driver: sqlite3.default.Database
+    });
+    
+    // For SQLite, we need to use exec
+    await db.exec(`
+      CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        username TEXT UNIQUE,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        last_login DATETIME
+      );
 
-    CREATE TABLE IF NOT EXISTS game_sessions (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
-      started_at DATETIME NOT NULL,
-      completed_at DATETIME,
-      levels_completed INTEGER NOT NULL DEFAULT 0,
-      total_time_seconds INTEGER,
-      total_strikes INTEGER DEFAULT 0,
-      game_completed BOOLEAN DEFAULT FALSE,
-      smallest_difference REAL,
-      smallest_difference_example TEXT,
-      FOREIGN KEY (user_id) REFERENCES users (id)
-    );
+      CREATE TABLE IF NOT EXISTS game_sessions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        started_at DATETIME NOT NULL,
+        completed_at DATETIME,
+        levels_completed INTEGER NOT NULL DEFAULT 0,
+        total_time_seconds INTEGER,
+        total_strikes INTEGER DEFAULT 0,
+        game_completed BOOLEAN DEFAULT FALSE,
+        smallest_difference REAL,
+        smallest_difference_example TEXT,
+        FOREIGN KEY (user_id) REFERENCES users (id)
+      );
 
-    CREATE TABLE IF NOT EXISTS level_results (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      game_session_id INTEGER NOT NULL,
-      level_number INTEGER NOT NULL,
-      time_seconds INTEGER NOT NULL,
-      strikes INTEGER NOT NULL DEFAULT 0,
-      average_color_difference REAL,
-      completed BOOLEAN DEFAULT TRUE,
-      failed BOOLEAN DEFAULT FALSE,
-      FOREIGN KEY (game_session_id) REFERENCES game_sessions (id)
-    );
-  `);
-  console.log('Database initialized successfully');
+      CREATE TABLE IF NOT EXISTS level_results (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        game_session_id INTEGER NOT NULL,
+        level_number INTEGER NOT NULL,
+        time_seconds INTEGER NOT NULL,
+        strikes INTEGER NOT NULL DEFAULT 0,
+        average_color_difference REAL,
+        completed BOOLEAN DEFAULT TRUE,
+        failed BOOLEAN DEFAULT FALSE,
+        FOREIGN KEY (game_session_id) REFERENCES game_sessions (id)
+      );
+    `);
+    
+    console.log('SQLite database initialized successfully');
+    return;
+  }
+  
+  // PostgreSQL table creation
+  try {
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        password_hash VARCHAR(255) NOT NULL,
+        username VARCHAR(100) UNIQUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        last_login TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS game_sessions (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL,
+        started_at TIMESTAMP NOT NULL,
+        completed_at TIMESTAMP,
+        levels_completed INTEGER NOT NULL DEFAULT 0,
+        total_time_seconds INTEGER,
+        total_strikes INTEGER DEFAULT 0,
+        game_completed BOOLEAN DEFAULT FALSE,
+        smallest_difference REAL,
+        smallest_difference_example TEXT,
+        FOREIGN KEY (user_id) REFERENCES users (id)
+      );
+
+      CREATE TABLE IF NOT EXISTS level_results (
+        id SERIAL PRIMARY KEY,
+        game_session_id INTEGER NOT NULL,
+        level_number INTEGER NOT NULL,
+        time_seconds INTEGER NOT NULL,
+        strikes INTEGER NOT NULL DEFAULT 0,
+        average_color_difference REAL,
+        completed BOOLEAN DEFAULT TRUE,
+        failed BOOLEAN DEFAULT FALSE,
+        FOREIGN KEY (game_session_id) REFERENCES game_sessions (id)
+      );
+    `);
+    console.log('PostgreSQL database initialized successfully');
+  } catch (error) {
+    console.error('Database initialization error:', error);
+    throw error;
+  }
+}
+
+// Database query helper functions
+async function dbQuery(text, params = []) {
+  if (process.env.DATABASE_URL) {
+    // PostgreSQL
+    const result = await db.query(text, params);
+    return result;
+  } else {
+    // SQLite
+    if (text.includes('INSERT') || text.includes('UPDATE') || text.includes('DELETE')) {
+      return await db.run(text, params);
+    } else if (text.includes('SELECT') && text.includes('LIMIT 1')) {
+      return { rows: [await db.get(text, params)] };
+    } else {
+      return { rows: await db.all(text, params) };
+    }
+  }
+}
+
+async function dbGet(text, params = []) {
+  const result = await dbQuery(text, params);
+  return result.rows[0];
+}
+
+async function dbAll(text, params = []) {
+  const result = await dbQuery(text, params);
+  return result.rows;
 }
 
 // Auth middleware
@@ -110,28 +201,30 @@ app.post("/api/auth/register", async (req, res) => {
   
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-    const result = await db.run(
-      'INSERT INTO users (email, password_hash, username) VALUES (?, ?, ?)',
+    const result = await dbQuery(
+      'INSERT INTO users (email, password_hash, username) VALUES ($1, $2, $3) RETURNING id',
       [email, hashedPassword, username]
     );
     
+    const userId = result.rows[0].id;
+    
     const token = jwt.sign(
-      { userId: result.lastID, email, username }, 
+      { userId, email, username }, 
       process.env.JWT_SECRET,
       { expiresIn: '30d' }
     );
     
     res.cookie('auth_token', token, {
       httpOnly: true,
-      secure: false, // set to true in production
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
     });
     
-    res.json({ success: true, user: { id: result.lastID, email, username } });
+    res.json({ success: true, user: { id: userId, email, username } });
   } catch (error) {
     console.error('Registration error:', error);
-    if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') {
+    if (error.code === '23505' || error.code === 'SQLITE_CONSTRAINT_UNIQUE') {
       res.status(400).json({ error: 'Email or username already exists' });
     } else {
       res.status(500).json({ error: 'Registration failed' });
@@ -144,12 +237,12 @@ app.post("/api/auth/login", async (req, res) => {
   const { email, password } = req.body;
   
   try {
-    const user = await db.get('SELECT * FROM users WHERE email = ?', [email]);
+    const user = await dbGet('SELECT * FROM users WHERE email = $1', [email]);
     if (!user || !await bcrypt.compare(password, user.password_hash)) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
     
-    await db.run('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?', [user.id]);
+    await dbQuery('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = $1', [user.id]);
     
     const token = jwt.sign(
       { userId: user.id, email: user.email, username: user.username }, 
@@ -159,7 +252,7 @@ app.post("/api/auth/login", async (req, res) => {
     
     res.cookie('auth_token', token, {
       httpOnly: true,
-      secure: false,
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 30 * 24 * 60 * 60 * 1000
     });
@@ -201,7 +294,7 @@ app.post("/api/game/start", optionalAuth, async (req, res) => {
 
   res.cookie("sessionId", sessionId, {
     httpOnly: true,
-    secure: false,
+    secure: process.env.NODE_ENV === 'production',
     sameSite: "lax"
   });
 
@@ -318,12 +411,12 @@ app.post("/api/game/game-over", async (req, res) => {
     // Save to database if user is authenticated
     if (session.userId) {
       try {
-        const gameSessionResult = await db.run(`
+        const gameSessionResult = await dbQuery(`
           INSERT INTO game_sessions (
             user_id, started_at, completed_at, levels_completed, 
             total_time_seconds, total_strikes, game_completed, 
             smallest_difference, smallest_difference_example
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id
         `, [
           session.userId,
           new Date(session.startTime).toISOString(),
@@ -336,15 +429,17 @@ app.post("/api/game/game-over", async (req, res) => {
           newSmallestExample ? JSON.stringify(newSmallestExample) : null
         ]);
 
+        const gameSessionId = gameSessionResult.rows[0].id;
+
         // Save individual level results
         for (const levelStat of finalStats.levelStats) {
-          await db.run(`
+          await dbQuery(`
             INSERT INTO level_results (
               game_session_id, level_number, time_seconds, strikes, 
               average_color_difference, completed, failed
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7)
           `, [
-            gameSessionResult.lastID,
+            gameSessionId,
             levelStat.level,
             levelStat.timeSeconds,
             levelStat.strikes,
@@ -374,45 +469,45 @@ app.get("/api/stats/aggregate", authenticateToken, async (req, res) => {
     const userId = req.user.userId;
     
     // Overall statistics
-    const overallStats = await db.get(`
+    const overallStats = await dbGet(`
       SELECT 
         COUNT(*) as total_games,
-        COUNT(CASE WHEN game_completed = 1 THEN 1 END) as games_won,
+        COUNT(CASE WHEN game_completed = true THEN 1 END) as games_won,
         CAST(AVG(levels_completed) AS REAL) as avg_levels_per_game,
         MIN(smallest_difference) as hardest_challenge_faced,
         SUM(total_time_seconds) as total_time_played,
         SUM(total_strikes) as total_strikes
       FROM game_sessions 
-      WHERE user_id = ?
+      WHERE user_id = $1
     `, [userId]);
     
     // Best performances
-    const bestStats = await db.get(`
+    const bestStats = await dbGet(`
       SELECT 
         MIN(total_time_seconds) as fastest_completion,
         MIN(total_strikes) as fewest_strikes_completion
       FROM game_sessions 
-      WHERE user_id = ? AND game_completed = 1
+      WHERE user_id = $1 AND game_completed = true
     `, [userId]);
     
     // Level-by-level performance
-    const levelStats = await db.all(`
+    const levelStats = await dbAll(`
       SELECT 
         level_number,
         COUNT(*) as times_played,
         CAST(AVG(time_seconds) AS REAL) as avg_time,
         CAST(AVG(strikes) AS REAL) as avg_strikes,
-        COUNT(CASE WHEN completed = 1 THEN 1 END) as times_completed,
-        CAST((COUNT(CASE WHEN completed = 1 THEN 1 END) * 100.0 / COUNT(*)) AS REAL) as success_rate
+        COUNT(CASE WHEN completed = true THEN 1 END) as times_completed,
+        CAST((COUNT(CASE WHEN completed = true THEN 1 END) * 100.0 / COUNT(*)) AS REAL) as success_rate
       FROM level_results lr
       JOIN game_sessions gs ON lr.game_session_id = gs.id
-      WHERE gs.user_id = ?
+      WHERE gs.user_id = $1
       GROUP BY level_number
       ORDER BY level_number
     `, [userId]);
     
     // Recent games
-    const recentGames = await db.all(`
+    const recentGames = await dbAll(`
       SELECT 
         started_at,
         levels_completed,
@@ -421,7 +516,7 @@ app.get("/api/stats/aggregate", authenticateToken, async (req, res) => {
         game_completed,
         smallest_difference
       FROM game_sessions 
-      WHERE user_id = ?
+      WHERE user_id = $1
       ORDER BY started_at DESC
       LIMIT 10
     `, [userId]);
@@ -439,8 +534,9 @@ app.get("/api/stats/aggregate", authenticateToken, async (req, res) => {
 });
 
 // Initialize database and start server
+const PORT = process.env.PORT || 4000;
 initDatabase().then(() => {
-  app.listen(process.env.PORT, () => {
-    console.log(`Backend running on http://localhost:${process.env.PORT}`);
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Backend running on port ${PORT}`);
   });
 }).catch(console.error);
