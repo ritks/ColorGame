@@ -1,5 +1,7 @@
 import axios from "axios";
 
+console.log('API_BASE_URL is:', import.meta.env.VITE_API_URL || "/api");
+
 // Use environment variable for API URL, fallback to local development
 const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
 
