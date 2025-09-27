@@ -13,7 +13,7 @@ export default function Game({ onQuit }) {
   const [colorData, setColorData] = useState([]);
   const [strikesUsed, setStrikesUsed] = useState(0);
   const [solvedRows, setSolvedRows] = useState([]);
-  const [disappearedTiles, setDisappearedTiles] = useState([]); // New state to track disappeared tiles per row
+  const [disappearedTiles, setDisappearedTiles] = useState([]); // New state for wrong guesses
   const [timerStart, setTimerStart] = useState(null);
   const [levelStartTime, setLevelStartTime] = useState(null);
   const [elapsedSec, setElapsedSec] = useState(0);
@@ -83,7 +83,7 @@ export default function Game({ onQuit }) {
         handleLevelComplete();
       }
     } else {
-      // Wrong guess - make this tile disappear
+      // wrong guess - add tile to disappeared tiles for this row
       const newDisappearedTiles = [...disappearedTiles];
       if (!newDisappearedTiles[rowIndex].includes(tileIndex)) {
         newDisappearedTiles[rowIndex] = [...newDisappearedTiles[rowIndex], tileIndex];
@@ -107,9 +107,9 @@ export default function Game({ onQuit }) {
       level, 
       levelTime, 
       strikesUsed,
-      currentLevelData.averageColorDifference,
-      currentLevelData.smallestRowDifference,
-      currentLevelData.difficultyExample
+      currentLevelData?.averageColorDifference || 0,
+      currentLevelData?.smallestRowDifference || 0,
+      currentLevelData?.difficultyExample || null
     );
     
     if (data.gameCompleted) {
@@ -137,9 +137,9 @@ export default function Game({ onQuit }) {
       
       // Update current level data
       setCurrentLevelData({
-        averageColorDifference: data.averageColorDifference,
-        smallestRowDifference: data.smallestRowDifference,
-        difficultyExample: data.difficultyExample
+        averageColorDifference: data.averageColorDifference || 0,
+        smallestRowDifference: data.smallestRowDifference || 0,
+        difficultyExample: data.difficultyExample || null
       });
     }
   }
@@ -179,7 +179,7 @@ export default function Game({ onQuit }) {
     setElapsedSec(0);
     setStrikesUsed(0);
     setSolvedRows([]);
-    setDisappearedTiles([]);
+    setDisappearedTiles([]); // Reset disappeared tiles
     setSessionId(null);
     setLevel(1);
     setRows(0);

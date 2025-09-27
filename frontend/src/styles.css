@@ -52,35 +52,47 @@ body {
   border-radius: 50%;
   cursor: pointer;
   border: 2px solid transparent;
-  transition: transform 0.15s ease-out, background-color 0.3s ease-out, opacity 0.3s ease-out;
+  transition: transform 0.15s ease-out;
   box-shadow: 0 0 4px rgb(0 0 0 / 0.1);
 }
 
-.tile:hover:not(.disappeared):not(.solved),
-.tile:focus:not(.disappeared):not(.solved) {
+.tile:hover,
+.tile:focus {
   transform: scale(1.1);
   outline: none;
 }
 
 .tile.solved {
-  cursor: default;
+  background-color: #000000 !important;
   opacity: 0;
-  transform: scale(0.8);
-  border-color: transparent;
-  box-shadow: none;
+  transform: scale(0.95);
+  transition: all 0.6s ease-out;
 }
 
-/* New style for disappeared tiles */
+/* New animation for wrong guesses */
 .tile.disappeared {
-  cursor: default;
-  opacity: 0.3;
-  transform: scale(0.8);
-  border-color: rgba(255, 255, 255, 0.1);
-  box-shadow: inset 0 0 8px rgba(255, 255, 255, 0.05);
+  opacity: 0;
+  transform: scale(0.8) rotate(180deg);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out, background-color 0.6s ease-out;
+  background-color: transparent !important;
 }
 
-.tile.disappeared:hover {
-  transform: scale(0.8); /* Override hover effect */
+/* Add a subtle shake animation on wrong guess */
+@keyframes wrongGuessShake {
+  0%, 100% { transform: translateX(0) scale(0.8) rotate(180deg); }
+  25% { transform: translateX(-3px) scale(0.8) rotate(180deg); }
+  75% { transform: translateX(3px) scale(0.8) rotate(180deg); }
+}
+
+.tile.disappeared {
+  animation: wrongGuessShake 0.3s ease-out, disappear 0.6s ease-out 0.3s forwards;
+}
+
+@keyframes disappear {
+  to {
+    opacity: 0;
+    transform: scale(0.8) rotate(180deg);
+  }
 }
   
 .result-message {
@@ -280,5 +292,487 @@ body {
   .example-tile {
     width: 50px;
     height: 50px;
+  }
+}
+
+/* Authentication Styles */
+.auth-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.auth-form {
+  background: #1a1a1a;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(255, 255, 255, 0.1);
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+
+.auth-form h2 {
+  color: #0077ff;
+  margin-bottom: 10px;
+  font-size: 1.8rem;
+}
+
+.auth-description {
+  color: #cccccc;
+  margin-bottom: 30px;
+  line-height: 1.4;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #333;
+  border-radius: 8px;
+  background: #2a2a2a;
+  color: #ffffff;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #0077ff;
+}
+
+.form-group input::placeholder {
+  color: #888;
+}
+
+.auth-button {
+  width: 100%;
+  padding: 12px;
+  background: #0077ff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-bottom: 20px;
+}
+
+.auth-button:hover:not(:disabled) {
+  background: #0066dd;
+}
+
+.auth-button:disabled {
+  background: #555;
+  cursor: not-allowed;
+}
+
+.error-message {
+  color: #ff4444;
+  margin-bottom: 15px;
+  padding: 10px;
+  background: #2a1a1a;
+  border-radius: 6px;
+  border-left: 4px solid #ff4444;
+}
+
+.auth-toggle {
+  margin-bottom: 20px;
+}
+
+.toggle-button {
+  background: none;
+  border: none;
+  color: #0077ff;
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: 0.9rem;
+}
+
+.toggle-button:hover {
+  color: #0066dd;
+}
+
+.guest-option {
+  border-top: 1px solid #333;
+  padding-top: 20px;
+}
+
+.guest-option hr {
+  border: none;
+  height: 1px;
+  background: #333;
+  margin-bottom: 20px;
+}
+
+.guest-button {
+  padding: 10px 20px;
+  background: #333;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-bottom: 10px;
+}
+
+.guest-button:hover {
+  background: #444;
+}
+
+.guest-note {
+  color: #888;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+/* Header Styles */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40px;
+  flex-wrap: wrap;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  color: #cccccc;
+}
+
+.logout-button {
+  padding: 8px 16px;
+  background: #ff4444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+
+.logout-button:hover {
+  background: #dd3333;
+}
+
+.auth-prompt {
+  color: #888;
+  font-size: 0.9rem;
+}
+
+/* Menu Styles */
+.menu-container {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.menu-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 40px;
+}
+
+.menu-button {
+  padding: 15px 25px;
+  border: none;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.menu-button.primary {
+  background: #0077ff;
+  color: white;
+}
+
+.menu-button.primary:hover {
+  background: #0066dd;
+  transform: translateY(-2px);
+}
+
+.menu-button.secondary {
+  background: #2a2a2a;
+  color: white;
+  border: 2px solid #0077ff;
+}
+
+.menu-button.secondary:hover {
+  background: #0077ff;
+  transform: translateY(-2px);
+}
+
+.menu-button.tertiary {
+  background: #333;
+  color: #cccccc;
+}
+
+.menu-button.tertiary:hover {
+  background: #444;
+  color: white;
+}
+
+.game-description {
+  background: #1a1a1a;
+  padding: 25px;
+  border-radius: 12px;
+  text-align: left;
+}
+
+.game-description h3 {
+  color: #0077ff;
+  margin-bottom: 15px;
+}
+
+.game-description p {
+  color: #cccccc;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.user-benefits {
+  border-top: 1px solid #333;
+  padding-top: 20px;
+}
+
+.user-benefits h4 {
+  color: #0077ff;
+  margin-bottom: 15px;
+}
+
+.user-benefits ul {
+  color: #cccccc;
+  line-height: 1.6;
+  padding-left: 20px;
+}
+
+.user-benefits li {
+  margin-bottom: 8px;
+}
+
+/* Aggregate Stats Styles */
+.aggregate-stats-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.stats-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.stats-header h2 {
+  color: #0077ff;
+  font-size: 2rem;
+  margin-bottom: 10px;
+}
+
+.stats-header p {
+  color: #cccccc;
+  font-size: 1.1rem;
+  margin-bottom: 20px;
+}
+
+.back-button {
+  padding: 10px 20px;
+  background: #333;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.back-button:hover {
+  background: #444;
+}
+
+.stats-grid.large-grid {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 20px;
+}
+
+.stat-card {
+  background: #1a1a1a;
+  padding: 20px;
+  border-radius: 12px;
+  text-align: center;
+  border-left: 4px solid #0077ff;
+  transition: transform 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+}
+
+.stat-card.success {
+  border-left-color: #00ff77;
+}
+
+.stat-card.highlight {
+  border-left-color: #ffaa00;
+  background: #2a1f0a;
+}
+
+.stat-number {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #ffffff;
+  margin-bottom: 8px;
+}
+
+.stat-label {
+  color: #cccccc;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.level-performance-table {
+  background: #1a1a1a;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.level-performance-table .table-header {
+  background: #0077ff;
+  color: white;
+  font-weight: bold;
+  padding: 15px;
+  display: grid;
+  grid-template-columns: 80px 80px 100px 100px 1fr;
+  gap: 15px;
+}
+
+.level-performance-table .table-row {
+  padding: 15px;
+  display: grid;
+  grid-template-columns: 80px 80px 100px 100px 1fr;
+  gap: 15px;
+  border-bottom: 1px solid #333;
+  color: #ffffff;
+}
+
+.level-performance-table .table-row:hover {
+  background: #2a2a2a;
+}
+
+.success-rate.high {
+  color: #00ff77;
+  font-weight: bold;
+}
+
+.success-rate.medium {
+  color: #ffaa00;
+  font-weight: bold;
+}
+
+.success-rate.low {
+  color: #ff4444;
+  font-weight: bold;
+}
+
+.recent-games {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.recent-game {
+  background: #1a1a1a;
+  padding: 20px;
+  border-radius: 10px;
+  border-left: 4px solid #333;
+}
+
+.recent-game.completed {
+  border-left-color: #00ff77;
+}
+
+.recent-game.failed {
+  border-left-color: #ff4444;
+}
+
+.game-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.game-date {
+  color: #cccccc;
+  font-size: 0.9rem;
+}
+
+.game-result.won {
+  color: #00ff77;
+  font-weight: bold;
+}
+
+.game-result.lost {
+  color: #ff4444;
+  font-weight: bold;
+}
+
+.game-details {
+  display: flex;
+  gap: 20px;
+  color: #888;
+  font-size: 0.9rem;
+}
+
+.stats-footer {
+  text-align: center;
+  margin-top: 40px;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+  
+  .stats-grid.large-grid {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 15px;
+  }
+  
+  .stat-card {
+    padding: 15px;
+  }
+  
+  .stat-number {
+    font-size: 1.5rem;
+  }
+  
+  .level-performance-table .table-header,
+  .level-performance-table .table-row {
+    grid-template-columns: 60px 60px 80px 80px 80px;
+    gap: 10px;
+    padding: 12px;
+    font-size: 0.85rem;
+  }
+  
+  .game-details {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  
+  .auth-form {
+    padding: 30px 20px;
   }
 }
