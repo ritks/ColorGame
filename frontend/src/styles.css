@@ -776,3 +776,304 @@ body {
     padding: 30px 20px;
   }
 }
+
+/* Share Feature Styles - Add these to your existing styles.css */
+
+.share-section {
+  background: #0a1a2a;
+  padding: 25px;
+  border-radius: 12px;
+  margin-bottom: 30px;
+  border: 2px solid #0077ff;
+}
+
+.share-section h3 {
+  color: #0077ff;
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 1.3rem;
+}
+
+.share-preview {
+  background: #1a1a1a;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border-left: 4px solid #0077ff;
+}
+
+.colored-share-preview {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: #ffffff;
+}
+
+.share-text-content {
+  white-space: pre-wrap;
+}
+
+.emoji-grid {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.level-emoji {
+  font-size: 1.2rem;
+  cursor: help;
+  transition: transform 0.2s;
+}
+
+.level-emoji:hover {
+  transform: scale(1.2);
+}
+
+/* Color Challenge Display */
+.color-challenge-display {
+  margin-top: 15px;
+  padding: 15px;
+  background: #2a2a2a;
+  border-radius: 8px;
+  border-left: 4px solid #ffaa00;
+}
+
+.challenge-label {
+  color: #ffaa00;
+  font-weight: bold;
+  margin-bottom: 10px;
+  font-size: 0.9rem;
+}
+
+.color-comparison {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.challenge-color {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 3px solid #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  cursor: help;
+  transition: transform 0.2s;
+}
+
+.challenge-color:hover {
+  transform: scale(1.1);
+}
+
+.challenge-color.different {
+  border-color: #ff4444;
+  animation: subtle-pulse 2s infinite;
+}
+
+@keyframes subtle-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+
+.vs-small {
+  font-weight: bold;
+  color: #cccccc;
+  font-size: 0.9rem;
+  margin: 0 5px;
+}
+
+.difference-text {
+  color: #ffaa00;
+  font-weight: bold;
+  font-size: 0.8rem;
+  background: #2a1f0a;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #ffaa00;
+}
+
+.share-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.share-button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 120px;
+}
+
+.share-button.primary {
+  background: #0077ff;
+  color: white;
+}
+
+.share-button.primary:hover {
+  background: #0066dd;
+  transform: translateY(-1px);
+}
+
+.share-button.secondary {
+  background: #ff6b35;
+  color: white;
+}
+
+.share-button.secondary:hover {
+  background: #e55a2b;
+  transform: translateY(-1px);
+}
+
+.share-button.tertiary {
+  background: #333;
+  color: white;
+  border: 2px solid #666;
+}
+
+.share-button.tertiary:hover {
+  background: #444;
+  border-color: #888;
+  transform: translateY(-1px);
+}
+
+.share-button.image {
+  background: #7b68ee;
+  color: white;
+}
+
+.share-button.image:hover {
+  background: #6a5acd;
+  transform: translateY(-1px);
+}
+
+.share-message {
+  text-align: center;
+  color: #00ff77;
+  font-weight: bold;
+  padding: 10px;
+  background: #0a2a0a;
+  border-radius: 6px;
+  border: 1px solid #00ff77;
+  animation: fadeInOut 0.3s ease-in;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateY(-10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.emoji-cell {
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+/* Legend for emoji meanings */
+.emoji-legend {
+  background: #2a2a2a;
+  padding: 15px;
+  border-radius: 8px;
+  margin-top: 15px;
+  font-size: 0.85rem;
+}
+
+.emoji-legend h4 {
+  margin-bottom: 10px;
+  color: #cccccc;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 5px;
+  color: #aaa;
+}
+
+.legend-emoji {
+  font-size: 1rem;
+  width: 20px;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .share-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .share-button {
+    width: 100%;
+    max-width: 200px;
+    margin-bottom: 8px;
+  }
+  
+  .share-preview {
+    font-size: 0.8rem;
+    padding: 15px;
+  }
+  
+  .emoji-grid {
+    gap: 2px;
+  }
+  
+  .level-emoji {
+    font-size: 1rem;
+  }
+  
+  .color-comparison {
+    justify-content: center;
+  }
+  
+  .challenge-color {
+    width: 35px;
+    height: 35px;
+  }
+  
+  .difference-text {
+    font-size: 0.75rem;
+  }
+}
+
+/* Tooltip styles for better emoji explanations */
+.level-emoji[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  background: #333;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  margin-top: 25px;
+  margin-left: -20px;
+  z-index: 100;
+  white-space: nowrap;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Update existing table styles to accommodate emoji column */
+.level-stats-table .table-header {
+  grid-template-columns: 60px 60px 80px 80px 100px 1fr;
+}
+
+.level-stats-table .table-row {
+  grid-template-columns: 60px 60px 80px 80px 100px 1fr;
+}
+
+@media (max-width: 600px) {
+  .level-stats-table .table-header,
+  .level-stats-table .table-row {
+    grid-template-columns: 50px 40px 60px 50px 70px 80px;
+    gap: 5px;
+    padding: 8px 5px;
+    font-size: 0.75rem;
+  }
+}
