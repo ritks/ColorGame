@@ -8,8 +8,8 @@ export default function GameStats({ stats, onPlayAgain }) {
   const { levelStats, smallestDifference, smallestDifferenceExample, totalTime } = stats;
   const completedLevels = levelStats.filter(level => !level.failed);
   const totalStrikes = levelStats.reduce((sum, level) => sum + level.strikes, 0);
-  const averageTimePerLevel = completedLevels.length > 0 
-    ? completedLevels.reduce((sum, level) => sum + level.timeSeconds, 0) / completedLevels.length 
+  const averageTimePerLevel = completedLevels.length > 0
+    ? completedLevels.reduce((sum, level) => sum + level.timeSeconds, 0) / completedLevels.length
     : 0;
 
   const formatTime = (seconds) => {
@@ -30,142 +30,102 @@ export default function GameStats({ stats, onPlayAgain }) {
   const generateShareText = () => {
     const gameWon = completedLevels.length === 10;
     const levelsCompleted = completedLevels.length;
-    
-    // Header
-    let shareText = `🎨 Color Tile Game ${gameWon ? 'Complete!' : `${levelsCompleted}/10`}\n`;
-    shareText += `⏱️ ${formatTime(totalTime)} | ⚡ ${totalStrikes} strikes\n`;
-    
+
+    let shareText = `Color Tile Game ${gameWon ? 'Complete!' : `${levelsCompleted}/10`}\n`;
+    shareText += `${formatTime(totalTime)} | ${totalStrikes} strikes\n`;
+
     if (smallestDifference && smallestDifference !== Infinity) {
-      shareText += `🎯 Hardest: ${Math.round(smallestDifference * 10) / 10}% difference\n`;
+      shareText += `Hardest: ${Math.round(smallestDifference * 10) / 10}% difference\n`;
     }
-    
+
     shareText += '\n';
 
-    // Level-by-level representation
     levelStats.forEach((level, index) => {
       const levelEmoji = getLevelEmoji(level);
       shareText += levelEmoji;
-      
-      // Add newline every 5 levels for better readability
+
       if ((index + 1) % 5 === 0) {
         shareText += '\n';
       }
     });
 
-    // Add final newline if needed
     if (levelStats.length % 5 !== 0) {
       shareText += '\n';
     }
 
-    shareText += '\nPlay at: [Your Game URL]'; // Replace with actual URL
-    
-    return shareText;
-  };
+    shareText += '\nPlay at: [Your Game URL]';
 
-  const generateColoredShareElement = () => {
-    return (
-      <div className="colored-share-preview">
-        <div className="share-text-content">
-          🎨 Color Tile Game {completedLevels.length === 10 ? 'Complete!' : `${completedLevels.length}/10`}<br/>
-          ⏱️ {formatTime(totalTime)} | ⚡ {totalStrikes} strikes<br/>
-          {smallestDifference && smallestDifference !== Infinity && (
-            <>🎯 Hardest: {Math.round(smallestDifference * 10) / 10}% difference<br/></>
-          )}
-          <br/>
-          <div className="emoji-grid">
-            {levelStats.map((level, index) => (
-              <span key={index} className="level-emoji" title={`Level ${level.level}: ${level.failed ? 'Failed' : `${level.strikes} strikes`}`}>
-                {getLevelEmoji(level)}
-              </span>
-            ))}
-          </div>
-          
-          {/* Show the hardest color challenge with actual colors */}
-          {smallestDifferenceExample && (
-            <div className="color-challenge-display">
-              <div className="challenge-label">💪 Hardest Challenge:</div>
-              <div className="color-comparison">
-                <div 
-                  className="challenge-color normal"
-                  style={{ backgroundColor: smallestDifferenceExample.baseColor }}
-                  title="Normal tile color"
-                />
-                <span className="vs-small">vs</span>
-                <div 
-                  className="challenge-color different"
-                  style={{ backgroundColor: smallestDifferenceExample.oddColor }}
-                  title="Different tile color"
-                />
-                <span className="difference-text">
-                  {Math.round(smallestDifference * 10) / 10}% diff
-                </span>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    );
+    return shareText;
   };
 
   const getLevelEmoji = (level) => {
     if (level.failed) {
-      return '❌'; // Failed level
+      return 'X';
     }
-    
-    // Success levels with performance indicators
     if (level.strikes === 0) {
-      return '🟢'; // Perfect (no strikes)
+      return '*';
     } else if (level.strikes === 1) {
-      return '🟡'; // Good (1 strike)
+      return 'o';
     } else if (level.strikes === 2) {
-      return '🟠'; // Okay (2 strikes)
+      return '-';
     } else {
-      return '🔴'; // Close call (3 strikes, barely made it)
+      return '.';
+    }
+  };
+
+  const getLevelIndicator = (level) => {
+    if (level.failed) {
+      return <span className="level-indicator level-fail" />;
+    }
+    if (level.strikes === 0) {
+      return <span className="level-indicator level-perfect" />;
+    } else if (level.strikes === 1) {
+      return <span className="level-indicator level-good" />;
+    } else if (level.strikes === 2) {
+      return <span className="level-indicator level-ok" />;
+    } else {
+      return <span className="level-indicator level-close" />;
     }
   };
 
   const copyShareText = async () => {
     const text = generateShareText();
-    
+
     try {
       await navigator.clipboard.writeText(text);
-      setShareMessage('Copied to clipboard! 📋');
+      setShareMessage('Copied to clipboard');
       setTimeout(() => setShareMessage(''), 3000);
     } catch (err) {
-      // Fallback for browsers that don't support clipboard API
       const textArea = document.createElement('textarea');
       textArea.value = text;
       textArea.style.position = 'fixed';
       textArea.style.opacity = '0';
       document.body.appendChild(textArea);
       textArea.select();
-      
+
       try {
         document.execCommand('copy');
-        setShareMessage('Copied to clipboard! 📋');
+        setShareMessage('Copied to clipboard');
       } catch (fallbackErr) {
         setShareMessage('Copy failed. Please select and copy manually.');
-        // Show the text in an alert as last resort
         alert(text);
       }
-      
+
       document.body.removeChild(textArea);
       setTimeout(() => setShareMessage(''), 3000);
     }
   };
 
   const copyColoredShare = async () => {
-    // For colored share, we'll create a more detailed text version
     let coloredText = generateShareText();
-    
-    // Add color information if available
+
     if (smallestDifferenceExample) {
-      coloredText += `\n🎨 Hardest colors: ${smallestDifferenceExample.baseColor} vs ${smallestDifferenceExample.oddColor}`;
+      coloredText += `\nHardest colors: ${smallestDifferenceExample.baseColor} vs ${smallestDifferenceExample.oddColor}`;
     }
-    
+
     try {
       await navigator.clipboard.writeText(coloredText);
-      setShareMessage('Colored version copied! 🎨');
+      setShareMessage('Colored version copied');
       setTimeout(() => setShareMessage(''), 3000);
     } catch (err) {
       setShareMessage('Copy failed - try the regular version');
@@ -174,73 +134,52 @@ export default function GameStats({ stats, onPlayAgain }) {
   };
 
   const shareAsImage = async () => {
-    // Create a canvas with the colored preview
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    
-    // Set canvas size
+
     canvas.width = 400;
     canvas.height = 300;
-    
-    // Fill background
-    ctx.fillStyle = '#1a1a1a';
+
+    ctx.fillStyle = '#111116';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    // Add text
+
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 20px Arial';
     ctx.textAlign = 'center';
-    
+
     const gameWon = completedLevels.length === 10;
-    ctx.fillText(`🎨 Color Tile Game ${gameWon ? 'Complete!' : `${completedLevels.length}/10`}`, 200, 40);
-    
+    ctx.fillText(`Color Tile Game ${gameWon ? 'Complete!' : `${completedLevels.length}/10`}`, 200, 40);
+
     ctx.font = '16px Arial';
-    ctx.fillText(`⏱️ ${formatTime(totalTime)} | ⚡ ${totalStrikes} strikes`, 200, 70);
-    
+    ctx.fillText(`${formatTime(totalTime)} | ${totalStrikes} strikes`, 200, 70);
+
     if (smallestDifference && smallestDifference !== Infinity) {
-      ctx.fillText(`🎯 Hardest: ${Math.round(smallestDifference * 10) / 10}% difference`, 200, 100);
+      ctx.fillText(`Hardest: ${Math.round(smallestDifference * 10) / 10}% difference`, 200, 100);
     }
-    
-    // Draw emoji grid
-    let x = 50;
-    let y = 140;
-    levelStats.forEach((level, index) => {
-      const emoji = getLevelEmoji(level);
-      ctx.font = '24px Arial';
-      ctx.fillText(emoji, x, y);
-      
-      x += 35;
-      if ((index + 1) % 10 === 0) {
-        x = 50;
-        y += 40;
-      }
-    });
-    
+
     // Draw color challenge if available
     if (smallestDifferenceExample) {
-      ctx.fillStyle = '#cccccc';
+      ctx.fillStyle = '#a0a0b0';
       ctx.font = '14px Arial';
-      ctx.fillText('💪 Hardest Challenge:', 200, 220);
-      
-      // Draw color squares
+      ctx.fillText('Hardest Challenge:', 200, 150);
+
       const baseColor = smallestDifferenceExample.baseColor;
       const oddColor = smallestDifferenceExample.oddColor;
-      
+
       ctx.fillStyle = baseColor;
-      ctx.fillRect(150, 230, 30, 30);
-      
-      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(150, 165, 30, 30);
+
+      ctx.fillStyle = '#454560';
       ctx.font = '12px Arial';
-      ctx.fillText('vs', 200, 250);
-      
+      ctx.fillText('vs', 200, 185);
+
       ctx.fillStyle = oddColor;
-      ctx.fillRect(220, 230, 30, 30);
-      
+      ctx.fillRect(220, 165, 30, 30);
+
       ctx.fillStyle = '#ffffff';
-      ctx.fillText(`${Math.round(smallestDifference * 10) / 10}% diff`, 200, 280);
+      ctx.fillText(`${Math.round(smallestDifference * 10) / 10}% diff`, 200, 220);
     }
-    
-    // Convert to blob and share/copy
+
     canvas.toBlob(async (blob) => {
       if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], 'color-game-result.png', { type: 'image/png' })] })) {
         try {
@@ -254,12 +193,11 @@ export default function GameStats({ stats, onPlayAgain }) {
           }
         }
       } else {
-        // Fallback: try to copy the image to clipboard
         try {
           await navigator.clipboard.write([
             new ClipboardItem({ 'image/png': blob })
           ]);
-          setShareMessage('Image copied to clipboard! 🖼️');
+          setShareMessage('Image copied to clipboard');
           setTimeout(() => setShareMessage(''), 3000);
         } catch (err) {
           copyColoredShare();
@@ -277,7 +215,6 @@ export default function GameStats({ stats, onPlayAgain }) {
         });
       } catch (err) {
         if (err.name !== 'AbortError') {
-          // User didn't abort, try clipboard instead
           copyShareText();
         }
       }
@@ -288,31 +225,34 @@ export default function GameStats({ stats, onPlayAgain }) {
 
   return (
     <div className="stats-container">
-      <h2>🎉 Game Statistics</h2>
-      
+      <h2>Game Statistics</h2>
+
       {/* Share Section */}
-      <div className="share-section">
+      <div className="stats-section">
         <h3>Share Your Result</h3>
-        <div className="share-preview">
-          {/* Enhanced preview with actual colors */}
-          {generateColoredShareElement()}
+        <div className="share-text-content">
+          Color Tile Game {completedLevels.length === 10 ? 'Complete!' : `${completedLevels.length}/10`}<br/>
+          {formatTime(totalTime)} | {totalStrikes} strikes<br/>
+          {smallestDifference && smallestDifference !== Infinity && (
+            <>Hardest: {Math.round(smallestDifference * 10) / 10}% difference</>
+          )}
         </div>
-        
+
         <div className="share-buttons">
           <button onClick={shareNative} className="share-button primary">
-            📱 Share Result
+            Share Result
           </button>
           <button onClick={copyColoredShare} className="share-button secondary">
-            🎨 Copy with Colors
+            Copy with Colors
           </button>
           <button onClick={copyShareText} className="share-button tertiary">
-            📋 Copy Text Only
+            Copy Text Only
           </button>
           <button onClick={shareAsImage} className="share-button image">
-            🖼️ Share as Image
+            Share as Image
           </button>
         </div>
-        
+
         {shareMessage && (
           <div className="share-message">{shareMessage}</div>
         )}
@@ -349,19 +289,16 @@ export default function GameStats({ stats, onPlayAgain }) {
           <p>{getDifficultyDescription(smallestDifference, smallestDifferenceExample.usesSaturationDiff)}</p>
           <div className="difficulty-example">
             <div className="example-tiles">
-              <div 
+              <div
                 className="example-tile"
                 style={{ backgroundColor: smallestDifferenceExample.baseColor }}
               />
               <span className="vs-text">vs</span>
-              <div 
+              <div
                 className="example-tile odd-tile"
                 style={{ backgroundColor: smallestDifferenceExample.oddColor }}
               />
             </div>
-            <p className="example-caption">
-              Regular tile vs. "odd" tile - can you spot the difference?
-            </p>
           </div>
         </div>
       )}
@@ -375,17 +312,15 @@ export default function GameStats({ stats, onPlayAgain }) {
             <span>Result</span>
             <span>Time</span>
             <span>Strikes</span>
-            <span>Avg Difficulty</span>
-            <span>Status</span>
+            <span>Difficulty</span>
           </div>
           {levelStats.map((level, index) => (
             <div key={index} className={`table-row ${level.failed ? 'failed-level' : ''}`}>
               <span>{level.level}</span>
-              <span className="emoji-cell">{getLevelEmoji(level)}</span>
+              <span className="result-cell">{getLevelIndicator(level)}</span>
               <span>{formatTime(level.timeSeconds)}</span>
               <span>{level.strikes}</span>
               <span>{Math.round(level.averageColorDifference)}%</span>
-              <span>{level.failed ? '❌ Failed' : '✅ Completed'}</span>
             </div>
           ))}
         </div>

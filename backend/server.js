@@ -463,8 +463,14 @@ app.get('/health', (req, res) => {
 
 // Initialize database and start server
 initDatabase().then(() => {
-  const port = process.env.PORT || 4000;
-  app.listen(port, () => {
-    console.log(`Backend running on port ${port}`);
-  });
-}).catch(console.error);
+  console.log('Database connected successfully');
+}).catch((err) => {
+  console.warn('Database connection failed - running without persistent storage:', err.message);
+  console.warn('Auth and stats features will be unavailable. Game will still work for guests.');
+  db = null;
+});
+
+const port = process.env.PORT || 4000;
+app.listen(port, () => {
+  console.log(`Backend running on port ${port}`);
+});

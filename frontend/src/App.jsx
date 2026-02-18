@@ -98,7 +98,7 @@ export default function App() {
   return (
     <div className="app-container">
       <div className="header">
-        <h1>🎨 Color Tile Game</h1>
+        <h1>Color Tile Game</h1>
         {user ? (
           <div className="user-info">
             <span>Welcome back, {user.username}!</span>
@@ -116,22 +116,22 @@ export default function App() {
       <div className="menu-container">
         <div className="menu-buttons">
           <button className="menu-button primary" onClick={startGame}>
-            🎮 Start New Game
+            Start New Game
           </button>
           
           {user ? (
             <button className="menu-button secondary" onClick={showStats}>
-              📊 View Statistics
+              View Statistics
             </button>
           ) : (
             <button className="menu-button secondary" onClick={showAuth}>
-              👤 Sign In / Register
+              Sign In / Register
             </button>
           )}
           
           {!user && (
             <button className="menu-button tertiary" onClick={playAsGuest}>
-              🎯 Play as Guest
+              Play as Guest
             </button>
           )}
         </div>
@@ -146,12 +146,12 @@ export default function App() {
           
           {user && (
             <div className="user-benefits">
-              <h4>✨ Signed In Benefits:</h4>
+              <h4>Signed In Benefits:</h4>
               <ul>
-                <li>🏆 Track your progress across all games</li>
-                <li>📈 View detailed performance statistics</li>
-                <li>🎯 See your personal bests and hardest challenges</li>
-                <li>📊 Analyze your performance by level</li>
+                <li>Track your progress across all games</li>
+                <li>View detailed performance statistics</li>
+                <li>See your personal bests and hardest challenges</li>
+                <li>Analyze your performance by level</li>
               </ul>
             </div>
           )}

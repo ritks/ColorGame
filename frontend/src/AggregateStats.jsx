@@ -69,14 +69,14 @@ export default function AggregateStats({ user, onBack }) {
   return (
     <div className="aggregate-stats-container">
       <div className="stats-header">
-        <h2>📊 Your Gaming Journey</h2>
+        <h2>Your Gaming Journey</h2>
         <p>Welcome back, {user.username}! Here's your complete gaming history:</p>
         <button onClick={onBack} className="back-button">Back to Menu</button>
       </div>
 
       {/* Overall Statistics */}
       <div className="stats-section">
-        <h3>🎯 Overall Performance</h3>
+        <h3>Overall Performance</h3>
         <div className="stats-grid large-grid">
           <div className="stat-card">
             <div className="stat-number">{overall.total_games}</div>
@@ -108,7 +108,7 @@ export default function AggregateStats({ user, onBack }) {
       {/* Best Performances */}
       {best.fastest_completion && (
         <div className="stats-section">
-          <h3>🏆 Personal Bests</h3>
+          <h3>Personal Bests</h3>
           <div className="stats-grid">
             <div className="stat-card highlight">
               <div className="stat-number">{formatTime(best.fastest_completion)}</div>
@@ -129,7 +129,7 @@ export default function AggregateStats({ user, onBack }) {
       {/* Level Performance */}
       {byLevel.length > 0 && (
         <div className="stats-section">
-          <h3>📈 Level-by-Level Performance</h3>
+          <h3>Level-by-Level Performance</h3>
           <div className="level-performance-table">
             <div className="table-header">
               <span>Level</span>
@@ -156,14 +156,14 @@ export default function AggregateStats({ user, onBack }) {
       {/* Recent Games */}
       {recent.length > 0 && (
         <div className="stats-section">
-          <h3>🕒 Recent Games</h3>
+          <h3>Recent Games</h3>
           <div className="recent-games">
             {recent.map((game, index) => (
               <div key={index} className={`recent-game ${game.game_completed ? 'completed' : 'failed'}`}>
                 <div className="game-info">
                   <span className="game-date">{formatDate(game.started_at)}</span>
                   <span className={`game-result ${game.game_completed ? 'won' : 'lost'}`}>
-                    {game.game_completed ? '✅ Won' : '❌ Lost'}
+                    {game.game_completed ? 'Won' : 'Lost'}
                   </span>
                 </div>
                 <div className="game-details">

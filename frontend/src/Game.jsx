@@ -212,7 +212,7 @@ export default function Game({ onQuit }) {
       )}
       {gameWon && !showStats && (
         <div className="result-message">
-          <h2>🎉 Congratulations! You won! 🎉</h2>
+          <h2>Congratulations! You won!</h2>
           <p>Loading your detailed statistics...</p>
         </div>
       )}
