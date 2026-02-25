@@ -20,14 +20,15 @@ export default function TileRow({
       <div
         key={i}
         className={`tile ${solved ? "solved" : ""} ${isDisappeared ? "disappeared" : ""}`}
-        style={{ 
-          backgroundColor: isDisappeared ? "transparent" : color
+        style={{
+          backgroundColor: isDisappeared ? "transparent" : color,
+          pointerEvents: isDisappeared ? "none" : undefined
         }}
-        onClick={() => onTileClick(rowIndex, i)}
-        role="button"
-        tabIndex={0}
+        onClick={isDisappeared ? undefined : () => onTileClick(rowIndex, i)}
+        role={isDisappeared ? undefined : "button"}
+        tabIndex={isDisappeared ? -1 : 0}
         aria-label={i === oddTileIndex ? "Odd colored tile" : "Normal tile"}
-        onKeyDown={(e) => {
+        onKeyDown={isDisappeared ? undefined : (e) => {
           if (e.key === "Enter" || e.key === " ") {
             onTileClick(rowIndex, i);
           }

@@ -12,8 +12,8 @@ function generateLevel(level) {
   // Modest tiles per row increase
   const tilesPerRow = Math.min(9 + Math.floor(level / 4), 12); // 9→9→9→10→10→10→10→11→11→11→11 max
 
-  // Gradual color difference reduction - minimum 10 so level 10 stays visible
-  const colorDifference = Math.max(10, Math.floor(28 - (level * 1.8))); // 26→24→22→20→19→17→15→13→11→10
+  // Gradual color difference reduction - minimum 12 so level 10 stays visible
+  const colorDifference = Math.max(12, Math.floor(30 - (level * 1.8))); // 28→26→24→23→21→19→17→15→13→12
   
   const colorData = [];
   const rowDifferences = [];

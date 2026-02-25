@@ -227,6 +227,10 @@ export default function GameStats({ stats, onPlayAgain }) {
     <div className="stats-container">
       <h2>Game Statistics</h2>
 
+      <button className="play-again-button" onClick={onPlayAgain}>
+        Play Again
+      </button>
+
       {/* Share Section */}
       <div className="stats-section">
         <h3>Share Your Result</h3>
@@ -326,9 +330,6 @@ export default function GameStats({ stats, onPlayAgain }) {
         </div>
       </div>
 
-      <button className="play-again-button" onClick={onPlayAgain}>
-        Play Again
-      </button>
     </div>
   );
 }
