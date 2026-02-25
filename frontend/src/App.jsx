@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import Game from "./Game";
 import AuthForm from "./AuthForm";
 import AggregateStats from "./AggregateStats";
+import TileCarousel from "./TileCarousel";
+import EndlessMode from "./EndlessMode";
 
 // Use the same API base URL configuration as api.js
 const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
@@ -70,6 +72,10 @@ export default function App() {
     setCurrentView('game');
   };
 
+  const startEndless = () => {
+    setCurrentView('endless');
+  };
+
   if (loading) {
     return (
       <div className="app-container">
@@ -86,7 +92,12 @@ export default function App() {
 
   // Game view
   if (currentView === 'game') {
-    return <Game onQuit={backToMenu} />;
+    return <Game onQuit={backToMenu} onPlayEndless={startEndless} />;
+  }
+
+  // Endless mode view
+  if (currentView === 'endless') {
+    return <EndlessMode onQuit={backToMenu} />;
   }
 
   // Statistics view
@@ -113,6 +124,8 @@ export default function App() {
         )}
       </div>
 
+      <TileCarousel />
+
       <div className="menu-container">
         <div className="menu-buttons">
           <button className="menu-button primary" onClick={startGame}>
@@ -134,6 +147,10 @@ export default function App() {
               Play as Guest
             </button>
           )}
+
+          <button className="menu-button tertiary" onClick={startEndless}>
+            Endless Mode (Debug)
+          </button>
         </div>
 
         <div className="game-description">
