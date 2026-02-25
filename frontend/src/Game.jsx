@@ -5,7 +5,7 @@ import GameStats from "./GameStats";
 
 const MAX_STRIKES = 3;
 
-export default function Game({ onQuit }) {
+export default function Game({ onQuit, onPlayEndless }) {
   const [sessionId, setSessionId] = useState(null);
   const [level, setLevel] = useState(1);
   const [rows, setRows] = useState(0);
@@ -22,6 +22,7 @@ export default function Game({ onQuit }) {
   const [gameWon, setGameWon] = useState(false);
   const [gameStats, setGameStats] = useState(null);
   const [showStats, setShowStats] = useState(false);
+  const [showEndlessChoice, setShowEndlessChoice] = useState(false);
   
   // Current level tracking
   const [currentLevelData, setCurrentLevelData] = useState(null);
@@ -121,7 +122,7 @@ export default function Game({ onQuit }) {
         smallestDifferenceExample: data.smallestDifferenceExample,
         totalTime: data.totalTime
       });
-      setTimeout(() => setShowStats(true), 1500); // Show stats after celebration
+      setTimeout(() => setShowEndlessChoice(true), 1500); // Show endless choice after celebration
     } else {
       // Continue to next level
       setLevel(data.level);
@@ -189,8 +190,41 @@ export default function Game({ onQuit }) {
     setLevelStartTime(null);
     setGameStats(null);
     setShowStats(false);
+    setShowEndlessChoice(false);
     setCurrentLevelData(null);
     onQuit();
+  }
+
+  if (showEndlessChoice && gameStats) {
+    return (
+      <div className="endless-choice">
+        <h2>You beat all 10 levels!</h2>
+        <p className="endless-choice-sub">Want to keep going in Endless Mode?</p>
+        <p className="endless-choice-desc">
+          Level 8–9 difficulty. 3 strikes per round. How far can you go?
+        </p>
+        <div className="endless-choice-buttons">
+          <button
+            className="menu-button primary"
+            onClick={() => {
+              setShowEndlessChoice(false);
+              onPlayEndless();
+            }}
+          >
+            Play Endless Mode
+          </button>
+          <button
+            className="menu-button secondary"
+            onClick={() => {
+              setShowEndlessChoice(false);
+              setShowStats(true);
+            }}
+          >
+            View Stats
+          </button>
+        </div>
+      </div>
+    );
   }
 
   if (showStats && gameStats) {
