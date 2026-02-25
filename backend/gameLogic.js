@@ -6,14 +6,14 @@ function getRandomColor() {
 }
 
 function generateLevel(level) {
-  // Moderate row increase - starts at 4, increases steadily
-  const rows = 4 + Math.floor((level - 1) * 0.8); // 4, 4, 5, 6, 7, 8, 9, 10, 11, 12
-  
-  // More tiles per row at higher levels
-  const tilesPerRow = Math.min(10 + Math.floor(level / 3), 15); // 10→11→12→13→14→15 max
-  
-  // Much more aggressive color difference reduction
-  const colorDifference = Math.max(1, Math.floor(25 - (level * 2.5))); // 22.5→20→17.5→15→12.5→10→7.5→5→2.5→1
+  // Gradual row increase - starts at 3, tops out at 8
+  const rows = 3 + Math.floor((level - 1) * 0.6); // 3, 3, 4, 4, 5, 6, 6, 7, 7, 8
+
+  // Modest tiles per row increase
+  const tilesPerRow = Math.min(9 + Math.floor(level / 4), 12); // 9→9→9→10→10→10→10→11→11→11→11 max
+
+  // Gradual color difference reduction - minimum 12 so level 10 stays visible
+  const colorDifference = Math.max(12, Math.floor(30 - (level * 1.8))); // 28→26→24→23→21→19→17→15→13→12
   
   const colorData = [];
   const rowDifferences = [];
@@ -23,11 +23,11 @@ function generateLevel(level) {
     const oddTileIndex = Math.floor(Math.random() * tilesPerRow);
     
     // Vary the difficulty within a level - some rows harder than others
-    const rowDifficultyMultiplier = Math.random() * 0.5 + 0.75; // 0.75 to 1.25
+    const rowDifficultyMultiplier = Math.random() * 0.3 + 0.85; // 0.85 to 1.15
     const adjustedColorDiff = Math.max(1, Math.floor(colorDifference * rowDifficultyMultiplier));
-    
+
     // Sometimes make the difference in saturation instead of lightness (harder to spot)
-    const usesSaturationDiff = level > 3 && Math.random() < 0.3; // 30% chance after level 3
+    const usesSaturationDiff = level > 5 && Math.random() < 0.25; // 25% chance after level 5
     
     let oddColor;
     let actualDifference;
