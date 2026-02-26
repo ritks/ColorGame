@@ -14,12 +14,25 @@ const ROW_CONFIGS = [
   { speed: 15, direction: 1 },
 ];
 
-function getRandomColor() {
-  return {
-    hue: Math.floor(Math.random() * 360),
-    saturation: 70,
-    lightness: 50,
-  };
+function hueDiff(h1, h2) {
+  const d = Math.abs(h1 - h2);
+  return Math.min(d, 360 - d);
+}
+
+// Returns a color whose hue is at least MIN_HUE_DIFF degrees away from all usedHues.
+// Falls back to the best candidate after 50 attempts if no perfect fit is found.
+function getDistinctColor(usedHues) {
+  const MIN_HUE_DIFF = 50;
+  let bestHue = Math.floor(Math.random() * 360);
+  let bestMin = usedHues.length === 0 ? 360 : Math.min(...usedHues.map(h => hueDiff(bestHue, h)));
+
+  for (let attempt = 0; attempt < 50; attempt++) {
+    const hue = Math.floor(Math.random() * 360);
+    const minDist = usedHues.length === 0 ? 360 : Math.min(...usedHues.map(h => hueDiff(hue, h)));
+    if (minDist >= MIN_HUE_DIFF) return { hue, saturation: 70, lightness: 50 };
+    if (minDist > bestMin) { bestHue = hue; bestMin = minDist; }
+  }
+  return { hue: bestHue, saturation: 70, lightness: 50 };
 }
 
 // Mirrors backend generateLevel at difficulty 8–9
@@ -33,9 +46,11 @@ function generateEndlessLevel() {
   let totalDiff = 0;
   let minDiff = Infinity;
   let minDiffExample = null;
+  const usedHues = [];
 
   for (let i = 0; i < rows; i++) {
-    const base = getRandomColor();
+    const base = getDistinctColor(usedHues);
+    usedHues.push(base.hue);
     const oddTileIndex = Math.floor(Math.random() * tilesPerRow);
     const rowMult = Math.random() * 0.3 + 0.85;
     const adjustedDiff = Math.max(1, Math.floor(colorDifference * rowMult));

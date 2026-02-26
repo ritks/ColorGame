@@ -1,8 +1,22 @@
-function getRandomColor() {
-  const hue = Math.floor(Math.random() * 360);
-  const saturation = 70;
-  const lightness = 50;
-  return { hue, saturation, lightness };
+function hueDiff(h1, h2) {
+  const d = Math.abs(h1 - h2);
+  return Math.min(d, 360 - d);
+}
+
+// Returns a color whose hue is at least MIN_HUE_DIFF degrees away from all usedHues.
+// Falls back to the best candidate after 50 attempts if no perfect fit is found.
+function getDistinctColor(usedHues) {
+  const MIN_HUE_DIFF = 50;
+  let bestHue = Math.floor(Math.random() * 360);
+  let bestMin = usedHues.length === 0 ? 360 : Math.min(...usedHues.map(h => hueDiff(bestHue, h)));
+
+  for (let attempt = 0; attempt < 50; attempt++) {
+    const hue = Math.floor(Math.random() * 360);
+    const minDist = usedHues.length === 0 ? 360 : Math.min(...usedHues.map(h => hueDiff(hue, h)));
+    if (minDist >= MIN_HUE_DIFF) return { hue, saturation: 70, lightness: 50 };
+    if (minDist > bestMin) { bestHue = hue; bestMin = minDist; }
+  }
+  return { hue: bestHue, saturation: 70, lightness: 50 };
 }
 
 function generateLevel(level) {
@@ -14,12 +28,14 @@ function generateLevel(level) {
 
   // Gradual color difference reduction - minimum 12 so level 10 stays visible
   const colorDifference = Math.max(12, Math.floor(30 - (level * 1.8))); // 28→26→24→23→21→19→17→15→13→12
-  
+
   const colorData = [];
   const rowDifferences = [];
+  const usedHues = [];
 
   for (let i = 0; i < rows; i++) {
-    const base = getRandomColor();
+    const base = getDistinctColor(usedHues);
+    usedHues.push(base.hue);
     const oddTileIndex = Math.floor(Math.random() * tilesPerRow);
     
     // Vary the difficulty within a level - some rows harder than others
