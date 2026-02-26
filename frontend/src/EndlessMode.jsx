@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import GameStats from "./GameStats";
 
 const MAX_STRIKES = 3;
@@ -62,6 +62,8 @@ function generateEndlessLevel() {
     }
   }
 
+  const levelType = Math.random() < 0.5 ? 'scrolling' : 'bouncing';
+
   return {
     rows,
     tilesPerRow,
@@ -69,6 +71,7 @@ function generateEndlessLevel() {
     averageDifference: totalDiff / rows,
     levelMinDiff: minDiff,
     levelMinDiffExample: minDiffExample,
+    levelType,
   };
 }
 
@@ -135,6 +138,158 @@ function ScrollingTileRow({
       >
         {tileElements}
       </div>
+    </div>
+  );
+}
+
+const BOUNCE_TILE_SIZE = 36;
+const BOUNCE_TILE_GAP = 6;
+
+// Full-screen bouncing mode: every tile is an independent physics object.
+// Tiles start in their row layout, then scatter after 1 second.
+// Clicking the odd tile in a row clears all tiles in that row.
+function BouncingLevelGame({
+  round, strikes, maxStrikes,
+  rows, tilesPerRow, colorData, solvedRows, disappearedTiles, onTileClick,
+}) {
+  const tilesPhysRef = useRef([]);
+  const rafRef = useRef(null);
+  const lastTimeRef = useRef(null);
+  const solvedRowsRef = useRef(solvedRows);
+  const disappearedRef = useRef(disappearedTiles);
+  const [tilePositions, setTilePositions] = useState(null);
+  const [launched, setLaunched] = useState(false);
+
+  useEffect(() => { solvedRowsRef.current = solvedRows; }, [solvedRows]);
+  useEffect(() => { disappearedRef.current = disappearedTiles; }, [disappearedTiles]);
+
+  // Initialize all tiles in their row grid layout, then launch after 1s
+  useEffect(() => {
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+    const HEADER_H = 56;
+    const rowW = tilesPerRow * BOUNCE_TILE_SIZE + (tilesPerRow - 1) * BOUNCE_TILE_GAP;
+    const rowSpacing = BOUNCE_TILE_SIZE + 10;
+    const totalH = rows * rowSpacing - 10;
+    const startX = (W - rowW) / 2;
+    const startY = HEADER_H + Math.max(16, (H - HEADER_H - totalH) / 2);
+
+    const tiles = [];
+    for (let ri = 0; ri < rows; ri++) {
+      for (let ti = 0; ti < tilesPerRow; ti++) {
+        const isOdd = ti === colorData[ri].oddTileIndex;
+        tiles.push({
+          id: `${ri}-${ti}`,
+          rowIndex: ri,
+          tileIndex: ti,
+          isOdd,
+          color: isOdd ? colorData[ri].oddColor : colorData[ri].baseColor,
+          x: startX + ti * (BOUNCE_TILE_SIZE + BOUNCE_TILE_GAP),
+          y: startY + ri * rowSpacing,
+          vx: 0,
+          vy: 0,
+        });
+      }
+    }
+
+    tilesPhysRef.current = tiles;
+    setTilePositions([...tiles]);
+
+    const timer = setTimeout(() => {
+      const base = 110 + Math.random() * 90;
+      tilesPhysRef.current = tilesPhysRef.current.map(t => ({
+        ...t,
+        vx: (Math.random() * 2 - 1) * base * (0.6 + Math.random() * 0.8),
+        vy: (Math.random() < 0.5 ? 1 : -1) * base * (0.5 + Math.random() * 0.9),
+      }));
+      setLaunched(true);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, []); // component is keyed by round — remounts fresh each round
+
+  // Physics loop: each tile bounces independently off the screen edges
+  useEffect(() => {
+    if (!launched) return;
+
+    const loop = (timestamp) => {
+      if (!lastTimeRef.current) lastTimeRef.current = timestamp;
+      const dt = Math.min((timestamp - lastTimeRef.current) / 1000, 0.05);
+      lastTimeRef.current = timestamp;
+
+      const W = window.innerWidth;
+      const H = window.innerHeight;
+
+      tilesPhysRef.current = tilesPhysRef.current.map(tile => {
+        // Don't move tiles that are solved or wrong-clicked
+        if (solvedRowsRef.current[tile.rowIndex]) return tile;
+        if (disappearedRef.current[tile.rowIndex]?.includes(tile.tileIndex)) return tile;
+
+        let { x, y, vx, vy } = tile;
+        x += vx * dt;
+        y += vy * dt;
+
+        if (x < 0) { x = 0; vx = Math.abs(vx); }
+        if (x + BOUNCE_TILE_SIZE > W) { x = W - BOUNCE_TILE_SIZE; vx = -Math.abs(vx); }
+        if (y < 0) { y = 0; vy = Math.abs(vy); }
+        if (y + BOUNCE_TILE_SIZE > H) { y = H - BOUNCE_TILE_SIZE; vy = -Math.abs(vy); }
+
+        return { ...tile, x, y, vx, vy };
+      });
+
+      setTilePositions([...tilesPhysRef.current]);
+      rafRef.current = requestAnimationFrame(loop);
+    };
+
+    rafRef.current = requestAnimationFrame(loop);
+    return () => {
+      cancelAnimationFrame(rafRef.current);
+      lastTimeRef.current = null;
+    };
+  }, [launched]);
+
+  return (
+    <div className="bouncing-fullscreen">
+      <div className="endless-header bouncing-header-overlay">
+        <span className="endless-round">Round {round}</span>
+        <span className="endless-level-type">Bounce</span>
+        <span className="endless-strikes">Strikes: {strikes} / {maxStrikes}</span>
+      </div>
+
+      {!launched && (
+        <div className="bouncing-countdown">Get ready...</div>
+      )}
+
+      {tilePositions && tilePositions.map(tile => {
+        const { rowIndex, tileIndex, color, x, y, isOdd } = tile;
+        const isSolved = solvedRows[rowIndex];
+        const isDisappeared = disappearedTiles[rowIndex]?.includes(tileIndex);
+        const inactive = isSolved || isDisappeared;
+
+        return (
+          <div
+            key={tile.id}
+            className={`tile${isSolved ? ' solved' : isDisappeared ? ' disappeared' : ''}`}
+            style={{
+              position: 'fixed',
+              left: Math.round(x),
+              top: Math.round(y),
+              width: BOUNCE_TILE_SIZE,
+              height: BOUNCE_TILE_SIZE,
+              backgroundColor: inactive ? 'transparent' : color,
+              cursor: inactive ? 'default' : 'pointer',
+              pointerEvents: inactive ? 'none' : 'auto',
+            }}
+            onClick={inactive ? undefined : () => onTileClick(rowIndex, tileIndex)}
+            role={inactive ? undefined : "button"}
+            tabIndex={inactive ? -1 : 0}
+            aria-label={isOdd ? "Odd colored tile" : "Normal tile"}
+            onKeyDown={inactive ? undefined : (e) => {
+              if (e.key === 'Enter' || e.key === ' ') onTileClick(rowIndex, tileIndex);
+            }}
+          />
+        );
+      })}
     </div>
   );
 }
@@ -241,28 +396,47 @@ export default function EndlessMode({ onQuit }) {
     <div className="endless-container">
       <div className="endless-header">
         <span className="endless-round">Round {state.round}</span>
+        <span className="endless-level-type">
+          {state.levelType === 'bouncing' ? 'Bounce' : 'Scroll'}
+        </span>
         <span className="endless-strikes">Strikes: {state.strikes} / {MAX_STRIKES}</span>
       </div>
-      <div className="endless-tile-grid">
-        {state.colorData.map((row, i) => {
-          const cfg = ROW_CONFIGS[i % ROW_CONFIGS.length];
-          return (
-            <ScrollingTileRow
-              key={`${state.round}-${i}`}
-              rowIndex={i}
-              tilesPerRow={state.tilesPerRow}
-              baseColor={row.baseColor}
-              oddColor={row.oddColor}
-              oddTileIndex={row.oddTileIndex}
-              solved={state.solvedRows[i]}
-              disappearedTiles={state.disappearedTiles[i] || []}
-              onTileClick={onTileClick}
-              speed={cfg.speed}
-              direction={cfg.direction}
-            />
-          );
-        })}
-      </div>
+
+      {state.levelType === 'bouncing' ? (
+        <BouncingLevelGame
+          key={state.round}
+          round={state.round}
+          strikes={state.strikes}
+          maxStrikes={MAX_STRIKES}
+          rows={state.rows}
+          tilesPerRow={state.tilesPerRow}
+          colorData={state.colorData}
+          solvedRows={state.solvedRows}
+          disappearedTiles={state.disappearedTiles}
+          onTileClick={onTileClick}
+        />
+      ) : (
+        <div className="endless-tile-grid">
+          {state.colorData.map((row, i) => {
+            const cfg = ROW_CONFIGS[i % ROW_CONFIGS.length];
+            return (
+              <ScrollingTileRow
+                key={`${state.round}-${i}`}
+                rowIndex={i}
+                tilesPerRow={state.tilesPerRow}
+                baseColor={row.baseColor}
+                oddColor={row.oddColor}
+                oddTileIndex={row.oddTileIndex}
+                solved={state.solvedRows[i]}
+                disappearedTiles={state.disappearedTiles[i] || []}
+                onTileClick={onTileClick}
+                speed={cfg.speed}
+                direction={cfg.direction}
+              />
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
