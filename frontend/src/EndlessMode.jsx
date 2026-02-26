@@ -252,7 +252,6 @@ function BouncingLevelGame({
     <div className="bouncing-fullscreen">
       <div className="endless-header bouncing-header-overlay">
         <span className="endless-round">Round {round}</span>
-        <span className="endless-level-type">Bounce</span>
         <span className="endless-strikes">Strikes: {strikes} / {maxStrikes}</span>
       </div>
 
@@ -396,9 +395,6 @@ export default function EndlessMode({ onQuit }) {
     <div className="endless-container">
       <div className="endless-header">
         <span className="endless-round">Round {state.round}</span>
-        <span className="endless-level-type">
-          {state.levelType === 'bouncing' ? 'Bounce' : 'Scroll'}
-        </span>
         <span className="endless-strikes">Strikes: {state.strikes} / {MAX_STRIKES}</span>
       </div>
 
