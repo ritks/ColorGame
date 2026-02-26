@@ -968,6 +968,46 @@ body {
   color: #ff2975;
 }
 
+.endless-level-type {
+  color: #a070ff;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  background: rgba(160, 112, 255, 0.12);
+  padding: 2px 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(160, 112, 255, 0.3);
+}
+
+/* Bouncing level — full-screen overlay */
+.bouncing-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: #000000;
+  overflow: hidden;
+}
+
+.bouncing-header-overlay {
+  position: relative;
+  z-index: 51;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(6px);
+}
+
+.bouncing-countdown {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #a0a0b0;
+  font-size: 0.9rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
 /* Scrolling tile rows */
 .endless-tile-grid {
   display: flex;

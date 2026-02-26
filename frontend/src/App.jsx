@@ -149,7 +149,7 @@ export default function App() {
           )}
 
           <button className="menu-button tertiary" onClick={startEndless}>
-            Endless Mode (Debug)
+            Endless Mode
           </button>
         </div>
 
