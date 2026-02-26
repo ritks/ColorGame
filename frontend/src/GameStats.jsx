@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-export default function GameStats({ stats, onPlayAgain }) {
+export default function GameStats({ stats, onPlayAgain, isEndless = false, onQuit }) {
   const [shareMessage, setShareMessage] = useState('');
 
   if (!stats) return null;
@@ -28,10 +28,12 @@ export default function GameStats({ stats, onPlayAgain }) {
   };
 
   const generateShareText = () => {
-    const gameWon = completedLevels.length === 10;
+    const gameWon = !isEndless && completedLevels.length === 10;
     const levelsCompleted = completedLevels.length;
 
-    let shareText = `Color Tile Game ${gameWon ? 'Complete!' : `${levelsCompleted}/10`}\n`;
+    let shareText = isEndless
+      ? `Endless Mode - ${levelsCompleted} ${levelsCompleted === 1 ? 'round' : 'rounds'} survived\n`
+      : `Color Tile Game ${gameWon ? 'Complete!' : `${levelsCompleted}/10`}\n`;
     shareText += `${formatTime(totalTime)} | ${totalStrikes} strikes\n`;
 
     if (smallestDifference && smallestDifference !== Infinity) {
@@ -53,7 +55,7 @@ export default function GameStats({ stats, onPlayAgain }) {
       shareText += '\n';
     }
 
-    shareText += '\nPlay at: [Your Game URL]';
+    shareText += '\nPlay at: https://color-game-zeta-sooty.vercel.app/';
 
     return shareText;
   };
@@ -147,8 +149,11 @@ export default function GameStats({ stats, onPlayAgain }) {
     ctx.font = 'bold 20px Arial';
     ctx.textAlign = 'center';
 
-    const gameWon = completedLevels.length === 10;
-    ctx.fillText(`Color Tile Game ${gameWon ? 'Complete!' : `${completedLevels.length}/10`}`, 200, 40);
+    const gameWon = !isEndless && completedLevels.length === 10;
+    const titleText = isEndless
+      ? `Endless Mode - ${completedLevels.length} rounds`
+      : `Color Tile Game ${gameWon ? 'Complete!' : `${completedLevels.length}/10`}`;
+    ctx.fillText(titleText, 200, 40);
 
     ctx.font = '16px Arial';
     ctx.fillText(`${formatTime(totalTime)} | ${totalStrikes} strikes`, 200, 70);
@@ -225,17 +230,26 @@ export default function GameStats({ stats, onPlayAgain }) {
 
   return (
     <div className="stats-container">
-      <h2>Game Statistics</h2>
+      <h2>{isEndless ? 'Endless Mode Statistics' : 'Game Statistics'}</h2>
 
       <button className="play-again-button" onClick={onPlayAgain}>
         Play Again
       </button>
 
+      {isEndless && onQuit && (
+        <button className="menu-button secondary" style={{ display: 'block', margin: '0 auto 1rem' }} onClick={onQuit}>
+          Back to Menu
+        </button>
+      )}
+
       {/* Share Section */}
       <div className="stats-section">
         <h3>Share Your Result</h3>
         <div className="share-text-content">
-          Color Tile Game {completedLevels.length === 10 ? 'Complete!' : `${completedLevels.length}/10`}<br/>
+          {isEndless
+            ? `Endless Mode - ${completedLevels.length} ${completedLevels.length === 1 ? 'round' : 'rounds'} survived`
+            : `Color Tile Game ${completedLevels.length === 10 ? 'Complete!' : `${completedLevels.length}/10`}`
+          }<br/>
           {formatTime(totalTime)} | {totalStrikes} strikes<br/>
           {smallestDifference && smallestDifference !== Infinity && (
             <>Hardest: {Math.round(smallestDifference * 10) / 10}% difference</>
@@ -267,8 +281,8 @@ export default function GameStats({ stats, onPlayAgain }) {
         <h3>Overall Performance</h3>
         <div className="stats-grid">
           <div className="stat-item">
-            <span className="stat-label">Levels Completed:</span>
-            <span className="stat-value">{completedLevels.length}/10</span>
+            <span className="stat-label">{isEndless ? 'Rounds Completed:' : 'Levels Completed:'}</span>
+            <span className="stat-value">{isEndless ? completedLevels.length : `${completedLevels.length}/10`}</span>
           </div>
           <div className="stat-item">
             <span className="stat-label">Total Time:</span>
@@ -279,7 +293,7 @@ export default function GameStats({ stats, onPlayAgain }) {
             <span className="stat-value">{totalStrikes}</span>
           </div>
           <div className="stat-item">
-            <span className="stat-label">Average Time/Level:</span>
+            <span className="stat-label">{isEndless ? 'Average Time/Round:' : 'Average Time/Level:'}</span>
             <span className="stat-value">{formatTime(Math.round(averageTimePerLevel))}</span>
           </div>
         </div>
@@ -307,12 +321,12 @@ export default function GameStats({ stats, onPlayAgain }) {
         </div>
       )}
 
-      {/* Per-Level Breakdown */}
+      {/* Per-Level/Round Breakdown */}
       <div className="stats-section">
-        <h3>Level Breakdown</h3>
+        <h3>{isEndless ? 'Round Breakdown' : 'Level Breakdown'}</h3>
         <div className="level-stats-table">
           <div className="table-header">
-            <span>Level</span>
+            <span>{isEndless ? 'Round' : 'Level'}</span>
             <span>Result</span>
             <span>Time</span>
             <span>Strikes</span>
