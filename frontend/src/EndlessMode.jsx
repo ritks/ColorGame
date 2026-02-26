@@ -144,6 +144,19 @@ function ScrollingTileRow({
 
 const BOUNCE_TILE_SIZE = 36;
 const BOUNCE_TILE_GAP = 6;
+const TILE_RADIUS = BOUNCE_TILE_SIZE / 2; // 18 — tiles are circles
+
+// Physics constants
+const GRAVITY           = 120;  // px/s² — low enough that tiles can bounce up through the pile
+const WALL_RESTITUTION  = 0.72; // energy kept on side-wall / ceiling bounce
+const FLOOR_RESTITUTION = 0.80; // energy kept on floor bounce
+const MIN_FLOOR_SPEED   = 290;  // px/s — minimum upward speed after a floor hit
+const BALL_RESTITUTION  = 0.88; // energy kept in normal ball-ball impulse
+const MAX_SPEED         = 680;  // px/s hard cap to prevent runaway
+// Random kick magnitudes injected on each surface/ball interaction
+const FLOOR_RAND_KICK   = 220;  // ±horizontal px/s added on every floor bounce
+const WALL_RAND_KICK    = 130;  // ±perpendicular px/s added on every wall/ceiling bounce
+const BALL_RAND_KICK    = 150;  // ±perpendicular px/s added on every ball-ball collision
 
 // Full-screen bouncing mode: every tile is an independent physics object.
 // Tiles start in their row layout, then scatter after 1 second.
@@ -193,22 +206,24 @@ function BouncingLevelGame({
     }
 
     tilesPhysRef.current = tiles;
-    setTilePositions([...tiles]);
+    setTilePositions(tiles.map(t => ({ ...t })));
 
     const timer = setTimeout(() => {
-      const base = 110 + Math.random() * 90;
-      tilesPhysRef.current = tilesPhysRef.current.map(t => ({
-        ...t,
-        vx: (Math.random() * 2 - 1) * base * (0.6 + Math.random() * 0.8),
-        vy: (Math.random() < 0.5 ? 1 : -1) * base * (0.5 + Math.random() * 0.9),
-      }));
+      // Give each tile a random launch direction and speed
+      const ts = tilesPhysRef.current;
+      for (let i = 0; i < ts.length; i++) {
+        const speed = 230 + Math.random() * 220;
+        const angle = Math.random() * 2 * Math.PI;
+        ts[i].vx = Math.cos(angle) * speed;
+        ts[i].vy = Math.sin(angle) * speed;
+      }
       setLaunched(true);
     }, 1000);
 
     return () => clearTimeout(timer);
   }, []); // component is keyed by round — remounts fresh each round
 
-  // Physics loop: each tile bounces independently off the screen edges
+  // Physics loop: gravity + wall damping + ball-ball collisions
   useEffect(() => {
     if (!launched) return;
 
@@ -219,25 +234,108 @@ function BouncingLevelGame({
 
       const W = window.innerWidth;
       const H = window.innerHeight;
+      const tiles = tilesPhysRef.current;
+      const solved = solvedRowsRef.current;
+      const gone = disappearedRef.current;
 
-      tilesPhysRef.current = tilesPhysRef.current.map(tile => {
-        // Don't move tiles that are solved or wrong-clicked
-        if (solvedRowsRef.current[tile.rowIndex]) return tile;
-        if (disappearedRef.current[tile.rowIndex]?.includes(tile.tileIndex)) return tile;
+      // ── Phase 1: gravity, integrate position, wall collisions ──────────
+      for (let i = 0; i < tiles.length; i++) {
+        const t = tiles[i];
+        if (solved[t.rowIndex] || gone[t.rowIndex]?.includes(t.tileIndex)) continue;
 
-        let { x, y, vx, vy } = tile;
-        x += vx * dt;
-        y += vy * dt;
+        t.vy += GRAVITY * dt;
+        t.x  += t.vx * dt;
+        t.y  += t.vy * dt;
 
-        if (x < 0) { x = 0; vx = Math.abs(vx); }
-        if (x + BOUNCE_TILE_SIZE > W) { x = W - BOUNCE_TILE_SIZE; vx = -Math.abs(vx); }
-        if (y < 0) { y = 0; vy = Math.abs(vy); }
-        if (y + BOUNCE_TILE_SIZE > H) { y = H - BOUNCE_TILE_SIZE; vy = -Math.abs(vy); }
+        // Left / right walls — reflect + random vertical scatter
+        if (t.x < 0) {
+          t.x = 0;
+          t.vx = Math.abs(t.vx) * WALL_RESTITUTION;
+          t.vy += (Math.random() - 0.5) * WALL_RAND_KICK;
+        } else if (t.x + BOUNCE_TILE_SIZE > W) {
+          t.x = W - BOUNCE_TILE_SIZE;
+          t.vx = -Math.abs(t.vx) * WALL_RESTITUTION;
+          t.vy += (Math.random() - 0.5) * WALL_RAND_KICK;
+        }
 
-        return { ...tile, x, y, vx, vy };
-      });
+        // Ceiling — reflect + random horizontal scatter
+        if (t.y < 0) {
+          t.y = 0;
+          t.vy = Math.abs(t.vy) * WALL_RESTITUTION;
+          t.vx += (Math.random() - 0.5) * WALL_RAND_KICK;
+        }
 
-      setTilePositions([...tilesPhysRef.current]);
+        // Floor — guaranteed upward bounce + large random horizontal kick to break clusters
+        if (t.y + BOUNCE_TILE_SIZE > H) {
+          t.y = H - BOUNCE_TILE_SIZE;
+          t.vy = -Math.max(Math.abs(t.vy) * FLOOR_RESTITUTION, MIN_FLOOR_SPEED);
+          t.vx += (Math.random() - 0.5) * FLOOR_RAND_KICK;
+        }
+
+        // Hard speed cap
+        const spd = Math.sqrt(t.vx * t.vx + t.vy * t.vy);
+        if (spd > MAX_SPEED) {
+          t.vx = (t.vx / spd) * MAX_SPEED;
+          t.vy = (t.vy / spd) * MAX_SPEED;
+        }
+      }
+
+      // ── Phase 2: ball-ball collision response ──────────────────────────
+      const DIAM = BOUNCE_TILE_SIZE; // = 2 * TILE_RADIUS
+      for (let i = 0; i < tiles.length - 1; i++) {
+        const a = tiles[i];
+        if (solved[a.rowIndex] || gone[a.rowIndex]?.includes(a.tileIndex)) continue;
+
+        for (let j = i + 1; j < tiles.length; j++) {
+          const b = tiles[j];
+          if (solved[b.rowIndex] || gone[b.rowIndex]?.includes(b.tileIndex)) continue;
+
+          const dx = (b.x + TILE_RADIUS) - (a.x + TILE_RADIUS);
+          const dy = (b.y + TILE_RADIUS) - (a.y + TILE_RADIUS);
+          const distSq = dx * dx + dy * dy;
+
+          if (distSq >= DIAM * DIAM || distSq < 0.0001) continue;
+
+          const dist = Math.sqrt(distSq);
+          const nx = dx / dist;
+          const ny = dy / dist;
+
+          // Push apart so circles no longer overlap
+          const push = (DIAM - dist) * 0.5;
+          a.x -= nx * push;
+          a.y -= ny * push;
+          b.x += nx * push;
+          b.y += ny * push;
+
+          // Relative velocity along collision normal
+          const relV = (a.vx - b.vx) * nx + (a.vy - b.vy) * ny;
+          if (relV <= 0) continue; // already separating
+
+          // Equal-mass impulse with restitution along the collision normal
+          const impulse = relV * (1 + BALL_RESTITUTION) * 0.5;
+          a.vx -= impulse * nx;
+          a.vy -= impulse * ny;
+          b.vx += impulse * nx;
+          b.vy += impulse * ny;
+
+          // Random perpendicular kick — breaks up the ordered layer that forms
+          // under gravity by adding chaos on every collision.
+          // Momentum is conserved: a gets +kick, b gets -kick along the perp axis.
+          const px = -ny, py = nx; // unit perpendicular to collision normal
+          const kick = (Math.random() - 0.5) * BALL_RAND_KICK;
+          a.vx += kick * px;  a.vy += kick * py;
+          b.vx -= kick * px;  b.vy -= kick * py;
+
+          // Re-cap speeds after collision
+          const spdA = Math.sqrt(a.vx * a.vx + a.vy * a.vy);
+          if (spdA > MAX_SPEED) { a.vx = (a.vx / spdA) * MAX_SPEED; a.vy = (a.vy / spdA) * MAX_SPEED; }
+          const spdB = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
+          if (spdB > MAX_SPEED) { b.vx = (b.vx / spdB) * MAX_SPEED; b.vy = (b.vy / spdB) * MAX_SPEED; }
+        }
+      }
+
+      // Snapshot mutable state into new objects so React reconciles correctly
+      setTilePositions(tiles.map(t => ({ ...t })));
       rafRef.current = requestAnimationFrame(loop);
     };
 
