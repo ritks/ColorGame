@@ -208,7 +208,7 @@ export default function Game({ onQuit, onPlayEndless }) {
             className="menu-button primary"
             onClick={() => {
               setShowEndlessChoice(false);
-              onPlayEndless();
+              onPlayEndless(gameStats);
             }}
           >
             Play Endless Mode

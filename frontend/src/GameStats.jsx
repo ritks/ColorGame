@@ -5,8 +5,13 @@ export default function GameStats({ stats, onPlayAgain, isEndless = false, onQui
 
   if (!stats) return null;
 
-  const { levelStats, smallestDifference, smallestDifferenceExample, totalTime } = stats;
-  const completedLevels = levelStats.filter(level => !level.failed);
+  const { levelStats, smallestDifference, smallestDifferenceExample, totalTime, hasRegularGame } = stats;
+  const endlessLevelStats = isEndless && hasRegularGame
+    ? levelStats.filter(level => level.origin === 'endless')
+    : levelStats;
+  const completedLevels = isEndless
+    ? endlessLevelStats.filter(level => !level.failed)
+    : levelStats.filter(level => !level.failed);
   const totalStrikes = levelStats.reduce((sum, level) => sum + level.strikes, 0);
   const averageTimePerLevel = completedLevels.length > 0
     ? completedLevels.reduce((sum, level) => sum + level.timeSeconds, 0) / completedLevels.length
@@ -230,14 +235,12 @@ export default function GameStats({ stats, onPlayAgain, isEndless = false, onQui
 
   return (
     <div className="stats-container">
-      <h2>{isEndless ? 'Endless Mode Statistics' : 'Game Statistics'}</h2>
-
       <button className="play-again-button" onClick={onPlayAgain}>
         Play Again
       </button>
 
       {isEndless && onQuit && (
-        <button className="menu-button secondary" style={{ display: 'block', margin: '0 auto 1rem' }} onClick={onQuit}>
+        <button className="menu-button secondary" style={{ display: 'block', margin: '0.75rem auto 1rem' }} onClick={onQuit}>
           Back to Menu
         </button>
       )}
@@ -275,6 +278,8 @@ export default function GameStats({ stats, onPlayAgain, isEndless = false, onQui
           <div className="share-message">{shareMessage}</div>
         )}
       </div>
+
+      <h2>{isEndless ? 'Endless Mode Statistics' : 'Game Statistics'}</h2>
 
       {/* Overall Stats */}
       <div className="stats-section">
@@ -323,24 +328,41 @@ export default function GameStats({ stats, onPlayAgain, isEndless = false, onQui
 
       {/* Per-Level/Round Breakdown */}
       <div className="stats-section">
-        <h3>{isEndless ? 'Round Breakdown' : 'Level Breakdown'}</h3>
+        <h3>{isEndless && hasRegularGame ? 'Full Breakdown' : isEndless ? 'Round Breakdown' : 'Level Breakdown'}</h3>
         <div className="level-stats-table">
           <div className="table-header">
-            <span>{isEndless ? 'Round' : 'Level'}</span>
+            <span>#</span>
             <span>Result</span>
             <span>Time</span>
             <span>Strikes</span>
             <span>Difficulty</span>
           </div>
-          {levelStats.map((level, index) => (
-            <div key={index} className={`table-row ${level.failed ? 'failed-level' : ''}`}>
-              <span>{level.level}</span>
-              <span className="result-cell">{getLevelIndicator(level)}</span>
-              <span>{formatTime(level.timeSeconds)}</span>
-              <span>{level.strikes}</span>
-              <span>{Math.round(level.averageColorDifference)}%</span>
-            </div>
-          ))}
+          {levelStats.map((level, index) => {
+            const prevOrigin = index > 0 ? levelStats[index - 1].origin : null;
+            const showGameHeader = isEndless && hasRegularGame && index === 0 && level.origin === 'game';
+            const showEndlessHeader = isEndless && hasRegularGame && level.origin === 'endless' && prevOrigin === 'game';
+            return (
+              <React.Fragment key={index}>
+                {showGameHeader && (
+                  <div className="table-section-divider">
+                    <span>Regular Game</span>
+                  </div>
+                )}
+                {showEndlessHeader && (
+                  <div className="table-section-divider">
+                    <span>Endless Mode</span>
+                  </div>
+                )}
+                <div className={`table-row ${level.failed ? 'failed-level' : ''}`}>
+                  <span>{level.origin === 'endless' ? `R${level.level}` : level.level}</span>
+                  <span className="result-cell">{getLevelIndicator(level)}</span>
+                  <span>{formatTime(level.timeSeconds)}</span>
+                  <span>{level.strikes}</span>
+                  <span>{Math.round(level.averageColorDifference)}%</span>
+                </div>
+              </React.Fragment>
+            );
+          })}
         </div>
       </div>
 
