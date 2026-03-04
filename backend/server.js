@@ -456,6 +456,74 @@ app.get("/api/stats/aggregate", authenticateToken, async (req, res) => {
   }
 });
 
+// Admin stats endpoint - protected by ADMIN_SECRET env variable
+app.get('/api/admin/stats', async (req, res) => {
+  const secret = req.headers['x-admin-secret'] || req.query.secret;
+  if (!secret || secret !== process.env.ADMIN_SECRET) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  if (!db) {
+    return res.status(503).json({ error: 'Database unavailable' });
+  }
+
+  try {
+    const [users, signups, games, activity, peakHours] = await Promise.all([
+      // Total registered users
+      db.query(`SELECT COUNT(*) as total FROM users`),
+
+      // Signups per day for the last 30 days
+      db.query(`
+        SELECT DATE(created_at) as date, COUNT(*) as count
+        FROM users
+        WHERE created_at > NOW() - INTERVAL '30 days'
+        GROUP BY date ORDER BY date
+      `),
+
+      // Game totals
+      db.query(`
+        SELECT
+          COUNT(*) as total_games,
+          COUNT(CASE WHEN game_completed = true THEN 1 END) as completed_games,
+          COUNT(DISTINCT user_id) as unique_players
+        FROM game_sessions
+      `),
+
+      // Active players (last 24h / 7d / 30d)
+      db.query(`
+        SELECT
+          COUNT(DISTINCT user_id) FILTER (WHERE started_at > NOW() - INTERVAL '1 day') as active_24h,
+          COUNT(DISTINCT user_id) FILTER (WHERE started_at > NOW() - INTERVAL '7 days') as active_7d,
+          COUNT(DISTINCT user_id) FILTER (WHERE started_at > NOW() - INTERVAL '30 days') as active_30d
+        FROM game_sessions
+      `),
+
+      // Peak hours - most concurrent sessions (approximated by sessions started per hour)
+      db.query(`
+        SELECT DATE_TRUNC('hour', started_at) as hour, COUNT(*) as sessions
+        FROM game_sessions
+        GROUP BY hour ORDER BY sessions DESC LIMIT 10
+      `)
+    ]);
+
+    res.json({
+      users: {
+        total: parseInt(users.rows[0].total),
+        signupsByDay: signups.rows
+      },
+      games: {
+        total: parseInt(games.rows[0].total_games),
+        completed: parseInt(games.rows[0].completed_games),
+        uniquePlayers: parseInt(games.rows[0].unique_players)
+      },
+      activity: activity.rows[0],
+      peakHours: peakHours.rows
+    });
+  } catch (error) {
+    console.error('Admin stats error:', error);
+    res.status(500).json({ error: 'Failed to fetch stats' });
+  }
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });

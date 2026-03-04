@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Analytics } from "@vercel/analytics/react";
 import Game from "./Game";
 import AuthForm from "./AuthForm";
 import AggregateStats from "./AggregateStats";
@@ -79,104 +80,100 @@ export default function App() {
     setCurrentView('endless');
   };
 
+  let content;
+
   if (loading) {
-    return (
+    content = (
       <div className="app-container">
         <h1>Color Tile Game</h1>
         <p>Loading...</p>
       </div>
     );
-  }
-
-  // Authentication view
-  if (currentView === 'auth') {
-    return <AuthForm onAuthSuccess={handleAuthSuccess} onPlayAsGuest={playAsGuest} />;
-  }
-
-  // Game view
-  if (currentView === 'game') {
-    return <Game onQuit={backToMenu} onPlayEndless={startEndless} />;
-  }
-
-  // Endless mode view
-  if (currentView === 'endless') {
-    return <EndlessMode onQuit={backToMenu} prevGameStats={prevGameStats} />;
-  }
-
-  // Statistics view
-  if (currentView === 'stats' && user) {
-    return <AggregateStats user={user} onBack={backToMenu} />;
-  }
-
-  // Main menu
-  return (
-    <div className="app-container">
-      <div className="header">
-        <h1>Color Tile Game</h1>
-        {user ? (
-          <div className="user-info">
-            <span>Welcome back, {user.username}!</span>
-            <button onClick={handleLogout} className="logout-button">
-              Logout
-            </button>
-          </div>
-        ) : (
-          <div className="auth-prompt">
-            <span>Sign in to track your progress!</span>
-          </div>
-        )}
-      </div>
-
-      <TileCarousel />
-
-      <div className="menu-container">
-        <div className="menu-buttons">
-          <button className="menu-button primary" onClick={startGame}>
-            Start New Game
-          </button>
-          
+  } else if (currentView === 'auth') {
+    content = <AuthForm onAuthSuccess={handleAuthSuccess} onPlayAsGuest={playAsGuest} />;
+  } else if (currentView === 'game') {
+    content = <Game onQuit={backToMenu} onPlayEndless={startEndless} />;
+  } else if (currentView === 'endless') {
+    content = <EndlessMode onQuit={backToMenu} prevGameStats={prevGameStats} />;
+  } else if (currentView === 'stats' && user) {
+    content = <AggregateStats user={user} onBack={backToMenu} />;
+  } else {
+    content = (
+      <div className="app-container">
+        <div className="header">
+          <h1>Color Tile Game</h1>
           {user ? (
-            <button className="menu-button secondary" onClick={showStats}>
-              View Statistics
-            </button>
+            <div className="user-info">
+              <span>Welcome back, {user.username}!</span>
+              <button onClick={handleLogout} className="logout-button">
+                Logout
+              </button>
+            </div>
           ) : (
-            <button className="menu-button secondary" onClick={showAuth}>
-              Sign In / Register
-            </button>
-          )}
-          
-          {!user && (
-            <button className="menu-button tertiary" onClick={playAsGuest}>
-              Play as Guest
-            </button>
-          )}
-
-          <button className="menu-button tertiary" onClick={startEndless}>
-            Endless Mode
-          </button>
-        </div>
-
-        <div className="game-description">
-          <h3>How to Play</h3>
-          <p>
-            Find the tile that's slightly different in color from the others in each row. 
-            You have 3 strikes per game and 10 levels to complete. 
-            Each level gets progressively harder with more subtle color differences!
-          </p>
-          
-          {user && (
-            <div className="user-benefits">
-              <h4>Signed In Benefits:</h4>
-              <ul>
-                <li>Track your progress across all games</li>
-                <li>View detailed performance statistics</li>
-                <li>See your personal bests and hardest challenges</li>
-                <li>Analyze your performance by level</li>
-              </ul>
+            <div className="auth-prompt">
+              <span>Sign in to track your progress!</span>
             </div>
           )}
         </div>
+
+        <TileCarousel />
+
+        <div className="menu-container">
+          <div className="menu-buttons">
+            <button className="menu-button primary" onClick={startGame}>
+              Start New Game
+            </button>
+
+            {user ? (
+              <button className="menu-button secondary" onClick={showStats}>
+                View Statistics
+              </button>
+            ) : (
+              <button className="menu-button secondary" onClick={showAuth}>
+                Sign In / Register
+              </button>
+            )}
+
+            {!user && (
+              <button className="menu-button tertiary" onClick={playAsGuest}>
+                Play as Guest
+              </button>
+            )}
+
+            <button className="menu-button tertiary" onClick={startEndless}>
+              Endless Mode
+            </button>
+          </div>
+
+          <div className="game-description">
+            <h3>How to Play</h3>
+            <p>
+              Find the tile that's slightly different in color from the others in each row.
+              You have 3 strikes per game and 10 levels to complete.
+              Each level gets progressively harder with more subtle color differences!
+            </p>
+
+            {user && (
+              <div className="user-benefits">
+                <h4>Signed In Benefits:</h4>
+                <ul>
+                  <li>Track your progress across all games</li>
+                  <li>View detailed performance statistics</li>
+                  <li>See your personal bests and hardest challenges</li>
+                  <li>Analyze your performance by level</li>
+                </ul>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
-    </div>
+    );
+  }
+
+  return (
+    <>
+      <Analytics />
+      {content}
+    </>
   );
 }
