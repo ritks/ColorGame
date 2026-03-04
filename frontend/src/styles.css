@@ -397,7 +397,7 @@ body {
 .stats-container h2 {
   text-align: center;
   color: #00fff0;
-  margin-bottom: 30px;
+  margin: 20px 0 20px;
   font-size: 1.4rem;
   text-transform: uppercase;
   letter-spacing: 2px;
@@ -708,6 +708,27 @@ body {
   background: #1a1116;
 }
 
+.level-stats-table .table-section-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 15px;
+  background: #111116;
+  color: #00fff0;
+  font-size: 0.75rem;
+  font-weight: bold;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-top: 1px solid #252530;
+}
+
+.level-stats-table .table-section-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #252530;
+}
+
 .level-stats-table .table-row:hover {
   background: #1a1a22;
 }
@@ -715,7 +736,7 @@ body {
 /* Play again */
 .play-again-button {
   display: block;
-  margin: 30px auto 0;
+  margin: 20px auto 0;
   padding: 12px 30px;
   font-size: 1.2rem;
   background: #00fff0;

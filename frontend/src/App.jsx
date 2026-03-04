@@ -12,6 +12,7 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentView, setCurrentView] = useState('menu'); // 'menu', 'auth', 'game', 'stats'
+  const [prevGameStats, setPrevGameStats] = useState(null);
 
   useEffect(() => {
     checkAuthStatus();
@@ -65,6 +66,7 @@ export default function App() {
   };
 
   const backToMenu = () => {
+    setPrevGameStats(null);
     setCurrentView('menu');
   };
 
@@ -72,7 +74,8 @@ export default function App() {
     setCurrentView('game');
   };
 
-  const startEndless = () => {
+  const startEndless = (stats = null) => {
+    setPrevGameStats(stats);
     setCurrentView('endless');
   };
 
@@ -97,7 +100,7 @@ export default function App() {
 
   // Endless mode view
   if (currentView === 'endless') {
-    return <EndlessMode onQuit={backToMenu} />;
+    return <EndlessMode onQuit={backToMenu} prevGameStats={prevGameStats} />;
   }
 
   // Statistics view
