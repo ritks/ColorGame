@@ -142,7 +142,7 @@ function ScrollingTileRow({
   }
 
   return (
-    <div className="endless-row-clip">
+    <div className="endless-row-clip" style={{ '--tiles-per-row': tilesPerRow }}>
       <div
         className="endless-row-track"
         style={{

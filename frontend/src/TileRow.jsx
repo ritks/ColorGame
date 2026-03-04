@@ -37,5 +37,5 @@ export default function TileRow({
     );
   }
 
-  return <div className="tile-row">{tiles}</div>;
+  return <div className="tile-row" style={{ '--tiles-per-row': tilesPerRow }}>{tiles}</div>;
 }

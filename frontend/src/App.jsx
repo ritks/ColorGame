@@ -5,48 +5,37 @@ import AuthForm from "./AuthForm";
 import AggregateStats from "./AggregateStats";
 import TileCarousel from "./TileCarousel";
 import EndlessMode from "./EndlessMode";
+import MixGame from "./MixGame";
 
-// Use the same API base URL configuration as api.js
 const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
 
 export default function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [currentView, setCurrentView] = useState('menu'); // 'menu', 'auth', 'game', 'stats'
+  const [currentView, setCurrentView] = useState('menu');
   const [prevGameStats, setPrevGameStats] = useState(null);
 
-  useEffect(() => {
-    checkAuthStatus();
-  }, []);
+  useEffect(() => { checkAuthStatus(); }, []);
 
   const checkAuthStatus = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/me`, {
-        credentials: 'include'
-      });
-      
+      const response = await fetch(`${API_BASE_URL}/auth/me`, { credentials: 'include' });
       if (response.ok) {
         const data = await response.json();
         setUser(data.user);
       }
     } catch (error) {
-      // User not authenticated, that's fine
+      // not authenticated
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAuthSuccess = (userData) => {
-    setUser(userData);
-    setCurrentView('menu');
-  };
+  const handleAuthSuccess = (userData) => { setUser(userData); setCurrentView('menu'); };
 
   const handleLogout = async () => {
     try {
-      await fetch(`${API_BASE_URL}/auth/logout`, {
-        method: 'POST',
-        credentials: 'include'
-      });
+      await fetch(`${API_BASE_URL}/auth/logout`, { method: 'POST', credentials: 'include' });
       setUser(null);
       setCurrentView('menu');
     } catch (error) {
@@ -54,118 +43,94 @@ export default function App() {
     }
   };
 
-  const startGame = () => {
-    setCurrentView('game');
-  };
-
-  const showAuth = () => {
-    setCurrentView('auth');
-  };
-
-  const showStats = () => {
-    setCurrentView('stats');
-  };
-
-  const backToMenu = () => {
-    setPrevGameStats(null);
-    setCurrentView('menu');
-  };
-
-  const playAsGuest = () => {
-    setCurrentView('game');
-  };
-
-  const startEndless = (stats = null) => {
-    setPrevGameStats(stats);
-    setCurrentView('endless');
-  };
+  const backToMenu = () => { setPrevGameStats(null); setCurrentView('menu'); };
+  const startEndless = (stats = null) => { setPrevGameStats(stats); setCurrentView('endless'); };
 
   let content;
 
   if (loading) {
     content = (
       <div className="app-container">
-        <h1>Color Tile Game</h1>
+        <h1>Color Games</h1>
         <p>Loading...</p>
       </div>
     );
   } else if (currentView === 'auth') {
-    content = <AuthForm onAuthSuccess={handleAuthSuccess} onPlayAsGuest={playAsGuest} />;
+    content = <AuthForm onAuthSuccess={handleAuthSuccess} onPlayAsGuest={() => setCurrentView('menu')} />;
   } else if (currentView === 'game') {
     content = <Game onQuit={backToMenu} onPlayEndless={startEndless} />;
   } else if (currentView === 'endless') {
     content = <EndlessMode onQuit={backToMenu} prevGameStats={prevGameStats} />;
+  } else if (currentView === 'mix') {
+    content = <MixGame onQuit={backToMenu} />;
   } else if (currentView === 'stats' && user) {
     content = <AggregateStats user={user} onBack={backToMenu} />;
   } else {
     content = (
       <div className="app-container">
         <div className="header">
-          <h1>Color Tile Game</h1>
+          <h1>Color Games</h1>
           {user ? (
             <div className="user-info">
-              <span>Welcome back, {user.username}!</span>
-              <button onClick={handleLogout} className="logout-button">
-                Logout
-              </button>
+              <span>Welcome, {user.username}!</span>
+              <button onClick={handleLogout} className="logout-button">Logout</button>
             </div>
           ) : (
             <div className="auth-prompt">
-              <span>Sign in to track your progress!</span>
+              <button className="auth-link-btn" onClick={() => setCurrentView('auth')}>Sign In / Register</button>
             </div>
           )}
         </div>
 
-        <TileCarousel />
-
-        <div className="menu-container">
-          <div className="menu-buttons">
-            <button className="menu-button primary" onClick={startGame}>
-              Start New Game
-            </button>
-
-            {user ? (
-              <button className="menu-button secondary" onClick={showStats}>
-                View Statistics
-              </button>
-            ) : (
-              <button className="menu-button secondary" onClick={showAuth}>
-                Sign In / Register
-              </button>
-            )}
-
-            {!user && (
-              <button className="menu-button tertiary" onClick={playAsGuest}>
-                Play as Guest
-              </button>
-            )}
-
-            <button className="menu-button tertiary" onClick={startEndless}>
-              Endless Mode
-            </button>
+        {/* Game cards */}
+        <div className="hub-cards">
+          {/* Color Tile */}
+          <div className="hub-card">
+            <TileCarousel />
+            <div className="hub-card-body">
+              <h2 className="hub-card-title">Color Tile</h2>
+              <p className="hub-card-desc">
+                Find the odd-colored tile in each row. 10 levels, 3 strikes.
+              </p>
+              <div className="hub-card-buttons">
+                <button className="menu-button primary" onClick={() => setCurrentView('game')}>
+                  Play
+                </button>
+                <button className="menu-button tertiary" onClick={() => startEndless()}>
+                  Endless
+                </button>
+              </div>
+            </div>
           </div>
 
-          <div className="game-description">
-            <h3>How to Play</h3>
-            <p>
-              Find the tile that's slightly different in color from the others in each row.
-              You have 3 strikes per game and 10 levels to complete.
-              Each level gets progressively harder with more subtle color differences!
-            </p>
-
-            {user && (
-              <div className="user-benefits">
-                <h4>Signed In Benefits:</h4>
-                <ul>
-                  <li>Track your progress across all games</li>
-                  <li>View detailed performance statistics</li>
-                  <li>See your personal bests and hardest challenges</li>
-                  <li>Analyze your performance by level</li>
-                </ul>
+          {/* Color Mix */}
+          <div className="hub-card">
+            <div className="hub-mix-preview">
+              <div className="hub-mix-swatch" style={{ background: "hsl(10, 80%, 50%)" }} />
+              <span className="hub-mix-plus">+</span>
+              <div className="hub-mix-swatch" style={{ background: "hsl(220, 75%, 45%)" }} />
+              <span className="hub-mix-arrow">→</span>
+              <div className="hub-mix-swatch" style={{ background: "hsl(320, 30%, 38%)" }} />
+            </div>
+            <div className="hub-card-body">
+              <h2 className="hub-card-title">Color Mix</h2>
+              <p className="hub-card-desc">
+                Memorize two colors, then dial in their 50/50 mix from memory. 6 rounds.
+              </p>
+              <div className="hub-card-buttons">
+                <button className="menu-button primary" onClick={() => setCurrentView('mix')}>
+                  Play
+                </button>
               </div>
-            )}
+            </div>
           </div>
         </div>
+
+        {user && (
+          <button className="menu-button secondary" style={{ display: 'block', margin: '0 auto', maxWidth: 320 }} onClick={() => setCurrentView('stats')}>
+            View Statistics
+          </button>
+        )}
       </div>
     );
   }
