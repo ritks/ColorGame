@@ -406,7 +406,7 @@ function BouncingLevelGame({
   );
 }
 
-export default function EndlessMode({ onQuit }) {
+export default function EndlessMode({ onQuit, prevGameStats }) {
   const [state, setState] = useState(freshState);
 
   function onTileClick(rowIndex, tileIndex) {
@@ -465,16 +465,30 @@ export default function EndlessMode({ onQuit }) {
           averageColorDifference: state.averageDifference,
         };
         const allLevelStats = [...state.completedRoundStats, failedStat];
-        const finalSmallestDiff = Math.min(state.smallestDiffSoFar, state.levelMinDiff);
-        const finalSmallestDiffExample = finalSmallestDiff < state.smallestDiffSoFar
+        const endlessSmallestDiff = Math.min(state.smallestDiffSoFar, state.levelMinDiff);
+        const endlessSmallestExample = endlessSmallestDiff < state.smallestDiffSoFar
           ? state.levelMinDiffExample
           : state.smallestDiffExampleSoFar;
-        const totalTime = allLevelStats.reduce((sum, s) => sum + s.timeSeconds, 0);
+
+        // Merge with previous game stats (levels 1-10) if the player came from a regular game
+        const prevSmallest = prevGameStats?.smallestDifference ?? Infinity;
+        const combinedSmallestDiff = Math.min(endlessSmallestDiff, prevSmallest);
+        const combinedSmallestExample = combinedSmallestDiff <= endlessSmallestDiff
+          ? endlessSmallestExample
+          : prevGameStats.smallestDifferenceExample;
+
+        const regularStats = (prevGameStats?.levelStats || []).map(s => ({ ...s, origin: 'game' }));
+        const endlessStats = allLevelStats.map(s => ({ ...s, origin: 'endless' }));
+
+        const endlessTime = allLevelStats.reduce((sum, s) => sum + s.timeSeconds, 0);
+        const totalTime = endlessTime + (prevGameStats?.totalTime ?? 0);
+
         const gameOverStats = {
-          levelStats: allLevelStats,
-          smallestDifference: finalSmallestDiff === Infinity ? null : finalSmallestDiff,
-          smallestDifferenceExample: finalSmallestDiff === Infinity ? null : finalSmallestDiffExample,
+          levelStats: [...regularStats, ...endlessStats],
+          smallestDifference: combinedSmallestDiff === Infinity ? null : combinedSmallestDiff,
+          smallestDifferenceExample: combinedSmallestDiff === Infinity ? null : combinedSmallestExample,
           totalTime,
+          hasRegularGame: regularStats.length > 0,
         };
         setState(prev => ({
           ...prev,
