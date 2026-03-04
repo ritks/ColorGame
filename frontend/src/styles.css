@@ -314,6 +314,7 @@ body {
 .tile-row {
   display: flex;
   justify-content: center;
+  align-items: center;
   gap: 8px;
 }
 
@@ -1039,10 +1040,12 @@ body {
 .endless-row-clip {
   overflow: hidden;
   width: 100%;
+  padding: 4px 0;
 }
 
 .endless-row-track {
   display: flex;
+  align-items: center;
   gap: 8px;
   width: max-content;
   animation: carouselScroll linear infinite;
